@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { OnChainContribution } from "@/hooks/useContract";
+import { ContributionModal } from "./ContributionModal";
 
 // ═══════════════════════════════════════════════════════════════
 //  IPFS Payload (matches what CLI/backend pins)
@@ -42,6 +43,7 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
   const [payload, setPayload] = useState<IPFSPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +115,11 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
   }
 
   return (
-    <div className="group rounded-xl border border-white/5 bg-[#111118] p-5 transition hover:border-cyan-500/20 hover:bg-[#13131f]">
+    <>
+    <div
+      className="group rounded-xl border border-white/5 bg-[#111118] p-5 transition hover:border-cyan-500/20 hover:bg-[#13131f] cursor-pointer"
+      onClick={() => setModalOpen(true)}
+    >
       {/* Header row */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -176,7 +182,7 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
 
           {/* Score bars (expanded) */}
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
             className="text-xs text-white/30 hover:text-white/60 transition cursor-pointer"
           >
             {expanded ? "▾ Hide scores" : "▸ Show all scores"}
@@ -237,6 +243,7 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
           href={`https://gateway.pinata.cloud/ipfs/${c.ipfsCID}`}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="truncate underline decoration-white/10 hover:text-white transition"
         >
           {c.ipfsCID}
@@ -254,5 +261,15 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
         })}
       </p>
     </div>
+
+    {/* Detail Modal */}
+    {modalOpen && (
+      <ContributionModal
+        contribution={c}
+        payload={payload}
+        onClose={() => setModalOpen(false)}
+      />
+    )}
+    </>
   );
 }
