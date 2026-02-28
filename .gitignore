@@ -1,41 +1,52 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ─── Dependencies ────────────────────────────────────────────────
+node_modules/
+**/node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# ─── Environment (NEVER commit secrets) ──────────────────────────
+.env
+.env.local
+.env.*.local
+# Keep the example template
+!.env.example
 
-# testing
-/coverage
+# ─── Next.js ─────────────────────────────────────────────────────
+.next/
+out/
+build/
 
-# next.js
-/.next/
-/out/
+# ─── TypeScript ──────────────────────────────────────────────────
+dist/
+*.tsbuildinfo
+next-env.d.ts
 
-# production
-/build
+# ─── Hardhat / Solidity ──────────────────────────────────────────
+web3/artifacts/
+web3/cache/
+web3/typechain-types/
+web3/contracts/          # junction/symlink to root contracts
+coverage/
 
-# misc
+# ─── CLI build output ────────────────────────────────────────────
+cli/dist/
+
+# ─── OS files ────────────────────────────────────────────────────
 .DS_Store
-*.pem
+Thumbs.db
+desktop.ini
 
-# debug
+# ─── Editor & IDE ────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Logs ────────────────────────────────────────────────────────
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# ─── Misc ────────────────────────────────────────────────────────
 .vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+bundle/

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Phantasia — Decentralized Contribution & Reputation",
+  title: "CommitChain — AI-Powered Decentralized Contribution Protocol",
   description:
-    "Submit contributions, pin to IPFS, store on Polygon Amoy, and level up your on-chain reputation.",
+    "Submit code contributions, get AI analysis, pin proof to IPFS, and earn on-chain reputation on Polygon.",
 };
 
 export default function RootLayout({

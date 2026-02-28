@@ -1,0 +1,27 @@
+{
+  "name": "commitchain-cli",
+  "version": "1.0.0",
+  "description": "CommitChain CLI — AI-powered contribution protocol",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "cc": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "simple-git": "^3.27.0",
+    "ethers": "^6.13.0",
+    "dotenv": "^16.4.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0"
+  }
+}

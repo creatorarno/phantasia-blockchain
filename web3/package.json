@@ -1,0 +1,19 @@
+{
+  "name": "commitchain-web3",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy:amoy": "npx hardhat run scripts/deploy.ts --network amoy",
+    "deploy:local": "npx hardhat run scripts/deploy.ts --network localhost",
+    "node": "npx hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "dotenv": "^16.4.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0"
+  }
+}
