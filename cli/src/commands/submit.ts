@@ -272,6 +272,39 @@ export async function submitCommand(opts: SubmitOptions) {
     log("⛓️", "TX Hash:", txHash);
     log("🔍", "Explorer:", `https://amoy.polygonscan.com/tx/${txHash}`);
 
+    // ── Step 5: Auto-commit changes to git ────────────────────
+    header("Step 5 — Committing changes to git");
+    try {
+      // Stage all changes
+      await git.add("-A");
+
+      const commitMsg = `[CommitChain] ${opts.title}\n\nCID: ${cid}\nTX: ${txHash}\nImpact: ${analysis.impactScore}/10 | Risk: ${analysis.riskLevel} | Type: ${analysis.contributionType}`;
+      await git.commit(commitMsg);
+
+      // Push to remote if available
+      try {
+        const remotes = await git.getRemotes(true);
+        if (remotes.length > 0) {
+          spinner("Pushing to remote");
+          await git.push();
+          done();
+          log("🚀", "Pushed to:", `origin/${branch}`);
+        }
+      } catch {
+        console.log(chalk.yellow("  ⚠ Could not push to remote (you can push manually)"));
+      }
+
+      log("✅", "Committed:", commitMsg.split("\n")[0]);
+    } catch (commitErr: unknown) {
+      const commitMsg = commitErr instanceof Error ? commitErr.message : String(commitErr);
+      if (commitMsg.includes("nothing to commit")) {
+        console.log(chalk.gray("  ℹ Changes already committed."));
+      } else {
+        console.log(chalk.yellow(`  ⚠ Auto-commit failed: ${commitMsg}`));
+        console.log(chalk.gray("    Your on-chain submission succeeded. Commit manually to prevent duplicate submissions."));
+      }
+    }
+
     // ── Done ──────────────────────────────────────────────────
     console.log(
       chalk.green.bold("\n  ✅ Contribution recorded successfully!\n")
