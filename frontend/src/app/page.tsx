@@ -340,7 +340,7 @@ export default function Dashboard() {
             <div className="mt-4 rounded-xl border border-white/5 bg-[#111118]/50 p-4">
               <p className="text-xs text-white/40 mb-2">⚡ Pro: Use the CLI for git-diff analysis</p>
               <code className="block rounded-lg bg-black/50 px-3 py-2 text-xs text-cyan-400 font-mono">
-                cc commit --title &quot;Fix auth bug&quot;
+                commitchain submit --title &quot;Fix auth bug&quot;
               </code>
             </div>
           </section>
