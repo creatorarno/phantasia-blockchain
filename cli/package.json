@@ -1,6 +1,6 @@
 {
   "name": "@commitchain/cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "CommitChain CLI — Submit AI-analyzed contributions to the blockchain. No API keys needed.",
   "type": "module",
   "license": "MIT",

@@ -33,8 +33,19 @@ interface APIResponse {
   analysis?: {
     summary: string;
     impactScore: number;
+    qualityScore: number;
+    securityScore: number;
+    complexityScore: number;
+    sizeScore: number;
+    confidenceScore: number;
     riskLevel: string;
     contributionType: string;
+    isSecurityRelevant: boolean;
+    hasSecurityRisk: boolean;
+    hasBreakingChange: boolean;
+    introducesVulnerability: boolean;
+    fixesVulnerability: boolean;
+    issues: string[];
     suggestions: string[];
   };
   ipfsUrl?: string;
@@ -80,7 +91,7 @@ export async function submitCommand(opts: SubmitOptions) {
     opts.contract ??
     process.env.COMMITCHAIN_CONTRACT ??
     process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ??
-    "";
+    "0x0B1b8155545a3A63C163bf21C5dD70596Fe9A32C";
   const rpcUrl = opts.rpc;
   const apiUrl = opts.api;
 
@@ -197,8 +208,34 @@ export async function submitCommand(opts: SubmitOptions) {
 
     log("🧠", "Summary:", analysis.summary);
     log("⚡", "Impact:", `${analysis.impactScore}/10`);
+    log("✨", "Quality:", `${analysis.qualityScore}/10`);
+    log("🔒", "Security:", `${analysis.securityScore}/10`);
+    log("🧩", "Complexity:", `${analysis.complexityScore}/10`);
+    log("📏", "Size:", `${analysis.sizeScore}/10`);
+    log("🎯", "Confidence:", `${analysis.confidenceScore}/10`);
     log("🛡️", "Risk:", analysis.riskLevel);
     log("🏷️", "Type:", analysis.contributionType);
+
+    // Security flags
+    if (analysis.hasSecurityRisk || analysis.introducesVulnerability) {
+      console.log(chalk.red.bold("  🚨 SECURITY WARNING:"));
+      if (analysis.hasSecurityRisk)
+        console.log(chalk.red("     ⚠ This change has security risk"));
+      if (analysis.introducesVulnerability)
+        console.log(chalk.red("     ⚠ This change may introduce a vulnerability"));
+    }
+    if (analysis.fixesVulnerability) {
+      console.log(chalk.green("  🛡️ This change fixes a vulnerability"));
+    }
+    if (analysis.hasBreakingChange) {
+      console.log(chalk.yellow("  ⚠ This change contains breaking changes"));
+    }
+
+    // Issues
+    if (analysis.issues.length > 0) {
+      log("🐛", "Issues:", analysis.issues.join("; "));
+    }
+    // Suggestions
     if (analysis.suggestions.length > 0) {
       log("💡", "Tips:", analysis.suggestions.join("; "));
     }

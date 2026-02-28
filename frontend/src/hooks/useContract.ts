@@ -15,7 +15,7 @@ const COMMITCHAIN_ABI = [
   "event ContributionSubmitted(uint256 indexed id, address indexed contributor, string title, string ipfsCID, uint256 timestamp, uint256 newReputation)",
 ] as const;
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "0x0B1b8155545a3A63C163bf21C5dD70596Fe9A32C";
 
 const CHAIN_CONFIG = {
   chainId: "0x" + Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 80002).toString(16),

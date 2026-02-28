@@ -85,6 +85,8 @@ function repLevel(rep: number) {
   return { label: "Newcomer", color: "from-gray-400 to-gray-500", icon: "🌱" };
 }
 
+type FeedTab = "all" | "mine";
+
 // ═══════════════════════════════════════════════════════════════
 //  DASHBOARD
 // ═══════════════════════════════════════════════════════════════
@@ -106,8 +108,15 @@ export default function Dashboard() {
   const [github, setGithub] = useState("");
   const [pinning, setPinning] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [feedTab, setFeedTab] = useState<FeedTab>("all");
 
   const level = repLevel(reputation);
+
+  // Filter contributions based on tab
+  const myContributions = account
+    ? contributions.filter((c) => c.contributor.toLowerCase() === account.toLowerCase())
+    : [];
+  const visibleContributions = feedTab === "mine" ? myContributions : contributions;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -347,23 +356,54 @@ export default function Dashboard() {
 
           {/* ─── FEED ─────────────────────────────────────────────── */}
           <section className="lg:col-span-3">
-            <h2 className="mb-6 text-lg font-bold flex items-center gap-2">
-              <span className="inline-block h-3 w-3 rounded-full bg-purple-400 shadow-lg shadow-purple-400/30" />
-              Contribution Feed
-              <span className="ml-1 text-sm font-normal text-white/25">
-                ({contributions.length})
-              </span>
-            </h2>
+            {/* Tab header */}
+            <div className="mb-6 flex items-center gap-4">
+              <button
+                onClick={() => setFeedTab("all")}
+                className={`flex items-center gap-2 text-lg font-bold transition ${
+                  feedTab === "all" ? "text-white" : "text-white/30 hover:text-white/60"
+                }`}
+              >
+                <span className={`inline-block h-3 w-3 rounded-full ${feedTab === "all" ? "bg-purple-400 shadow-lg shadow-purple-400/30" : "bg-white/10"}`} />
+                All Contributions
+                <span className="text-sm font-normal text-white/25">
+                  ({contributions.length})
+                </span>
+              </button>
 
-            {contributions.length === 0 ? (
+              {account && (
+                <button
+                  onClick={() => setFeedTab("mine")}
+                  className={`flex items-center gap-2 text-lg font-bold transition ${
+                    feedTab === "mine" ? "text-white" : "text-white/30 hover:text-white/60"
+                  }`}
+                >
+                  <span className={`inline-block h-3 w-3 rounded-full ${feedTab === "mine" ? "bg-cyan-400 shadow-lg shadow-cyan-400/30" : "bg-white/10"}`} />
+                  My Contributions
+                  <span className="text-sm font-normal text-white/25">
+                    ({myContributions.length})
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {visibleContributions.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-20 text-white/20">
-                <span className="text-5xl mb-4">📭</span>
-                <p className="font-medium">No contributions yet</p>
-                <p className="text-sm mt-1">Be the first to ship something!</p>
+                <span className="text-5xl mb-4">{feedTab === "mine" ? "🔍" : "📭"}</span>
+                <p className="font-medium">
+                  {feedTab === "mine"
+                    ? "You haven't submitted any contributions yet"
+                    : "No contributions yet"}
+                </p>
+                <p className="text-sm mt-1">
+                  {feedTab === "mine"
+                    ? "Use the form or CLI to submit your first contribution!"
+                    : "Be the first to ship something!"}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {contributions.map((c) => (
+                {visibleContributions.map((c) => (
                   <ContributionCard key={c.id} c={c} />
                 ))}
               </div>

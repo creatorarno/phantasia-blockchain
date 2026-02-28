@@ -27,7 +27,7 @@ program
   .option("-b, --branch <branch>", "Git branch name (auto-detected if omitted)")
   .option("--api <url>", "Override backend API URL", process.env.COMMITCHAIN_API_URL || "https://phantasia-blockchain.onrender.com")
   .option("--rpc <url>", "RPC URL", "https://rpc-amoy.polygon.technology")
-  .option("--contract <address>", "Contract address")
+  .option("--contract <address>", "Contract address", process.env.COMMITCHAIN_CONTRACT || "0x0B1b8155545a3A63C163bf21C5dD70596Fe9A32C")
   .option("--private-key <key>", "Private key (or set PRIVATE_KEY env var)")
   .action(async (opts) => {
     await submitCommand(opts);

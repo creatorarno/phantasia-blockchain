@@ -4,14 +4,25 @@ import { useState, useEffect } from "react";
 import type { OnChainContribution } from "@/hooks/useContract";
 
 // ═══════════════════════════════════════════════════════════════
-//  IPFS Payload (matches what CLI pins)
+//  IPFS Payload (matches what CLI/backend pins)
 // ═══════════════════════════════════════════════════════════════
 
 interface AIAnalysis {
   summary: string;
   impactScore: number;
+  qualityScore: number;
+  securityScore: number;
+  complexityScore: number;
+  sizeScore: number;
+  confidenceScore: number;
   riskLevel: string;
   contributionType: string;
+  isSecurityRelevant: boolean;
+  hasSecurityRisk: boolean;
+  hasBreakingChange: boolean;
+  introducesVulnerability: boolean;
+  fixesVulnerability: boolean;
+  issues: string[];
   suggestions: string[];
 }
 
@@ -30,6 +41,7 @@ interface IPFSPayload {
 export function ContributionCard({ c }: { c: OnChainContribution }) {
   const [payload, setPayload] = useState<IPFSPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,12 +67,23 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
   const addr = c.contributor;
   const short = addr.slice(0, 6) + "..." + addr.slice(-4);
 
-  // Impact score color
+  // Score color
   function scoreColor(score: number) {
     if (score >= 8) return "text-green-400";
     if (score >= 5) return "text-cyan-400";
     if (score >= 3) return "text-yellow-400";
     return "text-red-400";
+  }
+
+  // Score bar width
+  function scoreBar(score: number) {
+    const pct = Math.round((score / 10) * 100);
+    const color =
+      score >= 8 ? "bg-green-500" :
+      score >= 5 ? "bg-cyan-500" :
+      score >= 3 ? "bg-yellow-500" :
+      "bg-red-500";
+    return { pct, color };
   }
 
   // Risk badge
@@ -72,6 +95,21 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
       critical: "bg-red-500/10 text-red-400 border-red-500/20",
     };
     return colors[risk] ?? colors.medium;
+  }
+
+  // Type badge color
+  function typeBadge(type: string) {
+    const colors: Record<string, string> = {
+      bugfix: "border-red-500/20 bg-red-500/10 text-red-400",
+      feature: "border-purple-500/20 bg-purple-500/10 text-purple-400",
+      refactor: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+      docs: "border-gray-500/20 bg-gray-500/10 text-gray-400",
+      test: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+      chore: "border-gray-500/20 bg-gray-500/10 text-gray-400",
+      security: "border-orange-500/20 bg-orange-500/10 text-orange-400",
+      performance: "border-yellow-500/20 bg-yellow-500/10 text-yellow-400",
+    };
+    return colors[type] ?? colors.chore;
   }
 
   return (
@@ -103,17 +141,88 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
       {loading ? (
         <div className="mt-3 h-12 animate-pulse rounded-lg bg-white/5" />
       ) : analysis ? (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-3">
           <p className="text-sm text-white/60">{analysis.summary}</p>
+
+          {/* Badges row */}
           <div className="flex flex-wrap gap-2">
             <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${riskBadge(analysis.riskLevel)}`}>
               {analysis.riskLevel} risk
             </span>
-            <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-400">
+            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${typeBadge(analysis.contributionType)}`}>
               {analysis.contributionType}
             </span>
+            {analysis.isSecurityRelevant && (
+              <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-400">
+                🔒 security relevant
+              </span>
+            )}
+            {analysis.hasBreakingChange && (
+              <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400">
+                ⚠ breaking change
+              </span>
+            )}
+            {analysis.fixesVulnerability && (
+              <span className="rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400">
+                🛡️ fixes vulnerability
+              </span>
+            )}
+            {analysis.introducesVulnerability && (
+              <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 animate-pulse">
+                🚨 introduces vulnerability
+              </span>
+            )}
           </div>
-          {analysis.suggestions.length > 0 && (
+
+          {/* Score bars (expanded) */}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-xs text-white/30 hover:text-white/60 transition cursor-pointer"
+          >
+            {expanded ? "▾ Hide scores" : "▸ Show all scores"}
+          </button>
+
+          {expanded && (
+            <div className="space-y-2 rounded-lg bg-white/[0.02] p-3">
+              {([
+                ["Impact", analysis.impactScore],
+                ["Quality", analysis.qualityScore],
+                ["Security", analysis.securityScore],
+                ["Complexity", analysis.complexityScore],
+                ["Size", analysis.sizeScore],
+                ["Confidence", analysis.confidenceScore],
+              ] as [string, number][]).map(([label, score]) => {
+                const { pct, color } = scoreBar(score);
+                return (
+                  <div key={label} className="flex items-center gap-3">
+                    <span className="w-20 text-xs text-white/40">{label}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${color} transition-all duration-500`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className={`w-8 text-right text-xs font-bold tabular-nums ${scoreColor(score)}`}>
+                      {score}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Issues */}
+          {analysis.issues && analysis.issues.length > 0 && (
+            <div className="rounded-lg bg-red-500/5 border border-red-500/10 px-3 py-2 text-xs text-red-400/80">
+              🐛 {analysis.issues[0]}
+              {analysis.issues.length > 1 && (
+                <span className="text-white/20"> +{analysis.issues.length - 1} more</span>
+              )}
+            </div>
+          )}
+
+          {/* Suggestions */}
+          {analysis.suggestions && analysis.suggestions.length > 0 && (
             <div className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-white/40">
               💡 {analysis.suggestions[0]}
             </div>
