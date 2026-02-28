@@ -147,6 +147,35 @@ export async function submitCommand(opts: SubmitOptions) {
       }),
     });
 
+    // Handle non-JSON responses (e.g. Render deploy page, 502, etc.)
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      done();
+      const text = await res.text();
+      console.log(
+        chalk.red(`\n  ✖ Backend returned non-JSON response (HTTP ${res.status})`)
+      );
+      console.log(
+        chalk.gray(`    Response: ${text.slice(0, 120)}...`)
+      );
+      console.log(
+        chalk.yellow(`\n    Possible causes:`)
+      );
+      console.log(
+        chalk.gray(`    - Backend not deployed yet (check Render dashboard)`)
+      );
+      console.log(
+        chalk.gray(`    - Wrong API URL: ${apiUrl}`)
+      );
+      console.log(
+        chalk.gray(`    - Backend crashed (check Render logs)`)
+      );
+      console.log(
+        chalk.gray(`\n    Use --api <url> to set the correct backend URL`)
+      );
+      process.exit(1);
+    }
+
     const data: APIResponse = await res.json();
 
     if (!data.success || !data.cid || !data.analysis) {

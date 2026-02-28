@@ -25,7 +25,7 @@ program
   .requiredOption("-t, --title <title>", "Contribution title")
   .option("-m, --message <message>", "Optional description")
   .option("-b, --branch <branch>", "Git branch name (auto-detected if omitted)")
-  .option("--api <url>", "Backend API URL", "https://commitchain-api.vercel.app")
+  .option("--api <url>", "Override backend API URL", process.env.COMMITCHAIN_API_URL || "https://phantasia-blockchain.onrender.com")
   .option("--rpc <url>", "RPC URL", "https://rpc-amoy.polygon.technology")
   .option("--contract <address>", "Contract address")
   .option("--private-key <key>", "Private key (or set PRIVATE_KEY env var)")

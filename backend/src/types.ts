@@ -5,7 +5,14 @@
 /** Gemini AI analysis result */
 export interface AIAnalysis {
   summary: string;
+
   impactScore: number;
+  qualityScore: number;
+  securityScore: number;
+  complexityScore: number;
+  sizeScore: number;
+  confidenceScore: number;
+
   riskLevel: "low" | "medium" | "high" | "critical";
   contributionType:
     | "bugfix"
@@ -16,6 +23,14 @@ export interface AIAnalysis {
     | "chore"
     | "security"
     | "performance";
+
+  isSecurityRelevant: boolean;
+  hasSecurityRisk: boolean;
+  hasBreakingChange: boolean;
+  introducesVulnerability: boolean;
+  fixesVulnerability: boolean;
+
+  issues: string[];
   suggestions: string[];
 }
 

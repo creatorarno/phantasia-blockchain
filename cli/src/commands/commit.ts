@@ -54,7 +54,7 @@ async function analyzeWithGemini(title: string, diff: string): Promise<AIAnalysi
   const truncated = diff.length > 12000 ? diff.slice(0, 12000) + "\n...[truncated]" : diff;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -63,7 +63,108 @@ async function analyzeWithGemini(title: string, diff: string): Promise<AIAnalysi
           {
             parts: [
               {
-                text: `You are an expert code reviewer. Analyze this git diff and return ONLY valid JSON:\n{"summary":"...","impactScore":<0-10>,"riskLevel":"<low|medium|high|critical>","contributionType":"<bugfix|feature|refactor|docs|test|chore|security|performance>","suggestions":["..."]}\n\nTitle: ${title}\n\nDiff:\n\`\`\`\n${truncated}\n\`\`\``,
+                text: `You are a senior blockchain and software security auditor reviewing a Git contribution. Your job is to analyze the provided git diff and evaluate:
+
+1. Code quality
+2. Security vulnerabilities
+3. Architectural impact
+4. Complexity and size of contribution
+5. Maintainability and readability
+6. Performance impact
+7. Risk level
+8. Contribution value and significance
+
+You MUST act as an objective evaluator for a decentralized reputation system.
+
+IMPORTANT RULES:
+- Output ONLY valid JSON
+- Do NOT include markdown
+- Do NOT include explanations outside JSON
+- Do NOT include backticks
+- Do NOT include extra text
+- Ensure JSON is valid and parsable
+
+Evaluate carefully and assign realistic scores.
+
+SCORING GUIDELINES:
+
+impactScore (0–10):
+0–1 trivial change (typo, comment)
+2–3 small change (minor fix, formatting)
+4–5 moderate change (small feature, small refactor)
+6–7 meaningful change (feature, multi-file improvement)
+8–9 major improvement (important feature, optimization)
+10 critical system-level improvement
+
+securityScore (0–10):
+0 no security relevance
+5 moderate security improvement or risk
+10 critical vulnerability fixed or introduced
+
+qualityScore (0–10):
+Based on:
+- readability
+- structure
+- correctness
+- maintainability
+
+complexityScore (0–10):
+Based on:
+- logic complexity
+- architectural impact
+- cognitive load
+
+sizeScore (0–10):
+Based on:
+- number of lines changed
+- scope of modification
+
+riskLevel:
+- low → safe change
+- medium → moderate risk
+- high → high risk
+- critical → dangerous change or vulnerability
+
+contributionType MUST be one of:
+bugfix | feature | refactor | docs | test | chore | security | performance
+
+Also detect if the change introduces:
+- security vulnerabilities
+- unsafe patterns
+- secrets exposure
+- injection risks
+- broken logic
+- poor practices
+
+Return EXACTLY this JSON format:
+{
+  "summary": "Clear technical summary of what changed",
+  "impactScore": number,
+  "securityScore": number,
+  "qualityScore": number,
+  "complexityScore": number,
+  "sizeScore": number,
+  "riskLevel": "low|medium|high|critical",
+  "contributionType": "bugfix|feature|refactor|docs|test|chore|security|performance",
+  "isSecurityRelevant": boolean,
+  "hasSecurityRisk": boolean,
+  "hasBreakingChange": boolean,
+  "confidenceScore": number,
+  "issues": [
+    "list of problems found"
+  ],
+  "suggestions": [
+    "specific actionable improvements"
+  ]
+}
+
+Now analyze the following contribution:
+
+Title:
+${title}
+
+Git Diff:
+${truncated}`,
               },
             ],
           },
