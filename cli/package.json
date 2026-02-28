@@ -1,27 +1,50 @@
 {
-  "name": "commitchain-cli",
+  "name": "@commitchain/cli",
   "version": "1.0.0",
-  "description": "CommitChain CLI — AI-powered contribution protocol",
-  "private": true,
+  "description": "CommitChain CLI — Submit AI-analyzed contributions to the blockchain. No API keys needed.",
   "type": "module",
+  "license": "MIT",
   "bin": {
+    "commitchain": "./dist/index.js",
     "cc": "./dist/index.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "keywords": [
+    "blockchain",
+    "web3",
+    "contribution",
+    "reputation",
+    "git",
+    "ai",
+    "ipfs",
+    "polygon",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/commitchain"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "commander": "^12.0.0",
     "simple-git": "^3.27.0",
     "ethers": "^6.13.0",
-    "dotenv": "^16.4.0",
-    "chalk": "^5.3.0"
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "inquirer": "^9.3.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/node": "^20.0.0",
+    "@types/inquirer": "^9.0.7",
     "tsx": "^4.0.0"
   }
 }
