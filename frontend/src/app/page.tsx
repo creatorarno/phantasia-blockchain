@@ -1,442 +1,344 @@
 "use client";
 
-import { useState } from "react";
-import { useContract } from "@/hooks/useContract";
-import { ContributionCard } from "@/components/ContributionCard";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Code2,
+  Shield,
+  Zap,
+  BarChart3,
+  Brain,
+  Lock,
+} from "lucide-react";
+import { InteractiveBackground } from "@/components/InteractiveBackground";
+import { RotatingMadeBy } from "@/components/RotatingMadeBy";
 
-// ─── Pinata helper (inline to keep it simple) ───────────────────
-const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT ?? "";
-
-async function pinJSON(payload: Record<string, unknown>): Promise<string> {
-  const res = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${PINATA_JWT}`,
-    },
-    body: JSON.stringify({
-      pinataContent: payload,
-      pinataMetadata: { name: `cc-web-${Date.now()}` },
-    }),
-  });
-  if (!res.ok) throw new Error(`Pinata: ${await res.text()}`);
-  return (await res.json()).IpfsHash as string;
-}
-
-// ─── Gemini analysis (inline) ────────────────────────────────────
-const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? "";
-
-interface AIResult {
-  summary: string;
-  impactScore: number;
-  riskLevel: string;
-  contributionType: string;
-  suggestions: string[];
-}
-
-async function analyzeTitle(title: string, desc: string): Promise<AIResult> {
-  if (!GEMINI_KEY) {
-    return {
-      summary: desc || title,
-      impactScore: 5,
-      riskLevel: "medium",
-      contributionType: "feature",
-      suggestions: [],
-    };
-  }
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `You are a code contribution reviewer. Given this contribution title and description, return ONLY valid JSON:\n{"summary":"...","impactScore":<0-10>,"riskLevel":"<low|medium|high|critical>","contributionType":"<bugfix|feature|refactor|docs|test|chore|security|performance>","suggestions":["..."]}\n\nTitle: ${title}\nDescription: ${desc}`,
-                },
-              ],
-            },
-          ],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
-        }),
-      }
-    );
-    if (!res.ok) throw new Error("API fail");
-    const json = await res.json();
-    const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    return JSON.parse(text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim());
-  } catch {
-    return { summary: desc || title, impactScore: 5, riskLevel: "medium", contributionType: "feature", suggestions: [] };
-  }
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────
-function shortAddr(a: string) {
-  return a.slice(0, 6) + "..." + a.slice(-4);
-}
-
-function repLevel(rep: number) {
-  if (rep >= 100) return { label: "Legend", color: "from-yellow-400 to-amber-500", icon: "🏆" };
-  if (rep >= 50) return { label: "Expert", color: "from-purple-500 to-pink-500", icon: "⚡" };
-  if (rep >= 20) return { label: "Builder", color: "from-cyan-400 to-blue-500", icon: "🔧" };
-  return { label: "Newcomer", color: "from-gray-400 to-gray-500", icon: "🌱" };
-}
-
-type FeedTab = "all" | "mine";
-
-// ═══════════════════════════════════════════════════════════════
-//  DASHBOARD
-// ═══════════════════════════════════════════════════════════════
-export default function Dashboard() {
-  const {
-    account,
-    connecting,
-    connectWallet,
-    reputation,
-    contributions,
-    submitContribution,
-    submitting,
-    txHash,
-    error,
-  } = useContract();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [github, setGithub] = useState("");
-  const [pinning, setPinning] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [feedTab, setFeedTab] = useState<FeedTab>("all");
-
-  const level = repLevel(reputation);
-
-  // Filter contributions based on tab
-  const myContributions = account
-    ? contributions.filter((c) => c.contributor.toLowerCase() === account.toLowerCase())
-    : [];
-  const visibleContributions = feedTab === "mine" ? myContributions : contributions;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLocalError(null);
-
-    if (!account) { setLocalError("Connect your wallet first."); return; }
-    if (!title.trim()) { setLocalError("Title is required."); return; }
-
-    try {
-      // 1. AI analysis
-      setPinning(true);
-      const analysis = await analyzeTitle(title, description);
-
-      // 2. Pin to IPFS
-      const payload = {
-        title: title.trim(),
-        diff: description.trim() || "Submitted via web UI",
-        analysis,
-        contributor: account,
-        github: github.trim(),
-        timestamp: Date.now(),
-      };
-      const cid = await pinJSON(payload);
-      setPinning(false);
-
-      // 3. On-chain TX
-      await submitContribution(title.trim(), cid);
-
-      // 4. Reset
-      setTitle("");
-      setDescription("");
-      setGithub("");
-    } catch (err: unknown) {
-      setPinning(false);
-      setLocalError((err as Error).message);
-    }
-  }
-
-  const displayError = localError || error;
-  const busy = pinning || submitting;
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white font-sans">
-      {/* ─── NAV ──────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="relative h-8 w-8">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 blur-sm opacity-60" />
-              <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-xs font-black">
-                CC
+    <div className="min-h-screen bg-background text-foreground overflow-hidden relative">
+      <InteractiveBackground />
+      {/* Navigation */}
+      <nav className="fixed top-0 z-50 w-full border-b border-border/20 bg-background/90 backdrop-blur-md relative">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Code2 className="w-5 h-5 text-white" />
               </div>
+              <span className="text-lg font-bold text-white">CommitChain</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight">
-              Commit<span className="text-cyan-400">Chain</span>
-            </h1>
-            <span className="ml-2 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
-              Amoy Testnet
-            </span>
-          </div>
-
-          {account ? (
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center gap-2 rounded-full bg-gradient-to-r ${level.color} px-4 py-1.5 text-sm font-bold text-black shadow-lg`}>
-                <span>{level.icon}</span>
-                <span>{reputation} REP</span>
-                <span className="opacity-60">·</span>
-                <span>{level.label}</span>
-              </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-sm">
-                {shortAddr(account)}
-              </div>
+            <div className="hidden sm:flex items-center gap-8">
+              <a
+                href="#features"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+              >
+                Features
+              </a>
+              <a
+                href="#how"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+              >
+                How It Works
+              </a>
+              <Link
+                href="/docs"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+              >
+                Docs
+              </Link>
+              <a
+                href="#stats"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+              >
+                Stats
+              </a>
             </div>
-          ) : (
-            <button
-              onClick={connectWallet}
-              disabled={connecting}
-              className="group relative rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 font-semibold transition hover:brightness-110 disabled:opacity-50"
+            <Link
+              href="/dashboard"
+              className="px-6 py-2 rounded-lg bg-primary text-black font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20"
             >
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 blur opacity-40 group-hover:opacity-60 transition" />
-              <span className="relative">{connecting ? "Connecting…" : "Connect Wallet"}</span>
-            </button>
-          )}
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        {/* ─── HERO REPUTATION ────────────────────────────────────── */}
-        {account && (
-          <section className="mb-12 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#0f1628] via-[#0d1020] to-[#0a0a0f] p-8 relative">
-            {/* Glow */}
-            <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-cyan-500/10 blur-3xl" />
-            <div className="relative flex flex-col items-center gap-6 md:flex-row md:justify-between">
-              <div>
-                <p className="mb-1 text-sm uppercase tracking-widest text-cyan-400">Your Impact Score</p>
-                <div className="flex items-end gap-3">
-                  <span className="text-7xl font-black tabular-nums leading-none">{reputation}</span>
-                  <span className="mb-2 text-lg text-white/30">points</span>
-                </div>
-                <p className="mt-2 text-white/40">
-                  Each contribution earns <span className="text-cyan-300 font-semibold">+10 REP</span>. Level up by shipping.
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className={`flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br ${level.color} text-5xl shadow-2xl ring-4 ring-black/30`}>
-                  {level.icon}
-                </div>
-                <span className={`rounded-full bg-gradient-to-r ${level.color} px-4 py-1 text-sm font-bold text-black`}>
-                  {level.label}
-                </span>
-              </div>
-            </div>
-            {/* Progress */}
-            <div className="relative mt-6">
-              <div className="mb-1 flex justify-between text-xs text-white/30">
-                <span>Next level</span>
-                <span>{reputation % 50} / 50</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/5">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-700"
-                  style={{ width: `${((reputation % 50) / 50) * 100}%` }}
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        <div className="grid gap-10 lg:grid-cols-5">
-          {/* ─── SUBMIT FORM ──────────────────────────────────────── */}
-          <section className="lg:col-span-2">
-            <div className="rounded-2xl border border-white/5 bg-[#111118]/80 backdrop-blur-sm p-6">
-              <h2 className="mb-6 text-lg font-bold flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full bg-cyan-400 shadow-lg shadow-cyan-400/30" />
-                New Contribution
-              </h2>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-sm text-white/50">Title *</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Fix auth race condition"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-white/20 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm text-white/50">Description</label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                    placeholder="What did you build and why does it matter?"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-white/20 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 resize-none transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm text-white/50">GitHub URL</label>
-                  <input
-                    type="url"
-                    value={github}
-                    onChange={(e) => setGithub(e.target.value)}
-                    placeholder="https://github.com/you/repo"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-white/20 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition"
-                  />
-                </div>
-
-                {displayError && (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-400">
-                    {displayError}
-                  </div>
-                )}
-
-                {txHash && (
-                  <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-sm text-green-400">
-                    ✓ Confirmed!{" "}
-                    <a
-                      href={`https://amoy.polygonscan.com/tx/${txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      View TX →
-                    </a>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={busy || !account}
-                  className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 py-3 font-bold transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed relative group"
-                >
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 blur opacity-0 group-hover:opacity-30 transition" />
-                  <span className="relative">
-                    {!account
-                      ? "Connect Wallet to Submit"
-                      : pinning
-                      ? "🧠 AI Analysis + IPFS Pin…"
-                      : submitting
-                      ? "⛓️ Confirming on-chain…"
-                      : "Submit Contribution"}
-                  </span>
-                </button>
-              </form>
-
-              {/* Flow steps */}
-              <div className="mt-6 space-y-2">
-                {[
-                  { s: 1, t: "Fill in contribution details", i: "📝" },
-                  { s: 2, t: "AI analyzes & scores impact", i: "🧠" },
-                  { s: 3, t: "JSON pinned to IPFS (Pinata)", i: "📌" },
-                  { s: 4, t: "CID stored on Polygon Amoy", i: "⛓️" },
-                  { s: 5, t: "Reputation +10 — level up!", i: "🏆" },
-                ].map(({ s, t, i }) => (
-                  <div key={s} className="flex items-center gap-3 text-xs text-white/25">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/5 text-[10px]">
-                      {i}
-                    </span>
-                    {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* CLI promo */}
-            <div className="mt-4 rounded-xl border border-white/5 bg-[#111118]/50 p-4">
-              <p className="text-xs text-white/40 mb-2">⚡ Pro: Use the CLI for git-diff analysis</p>
-              <code className="block rounded-lg bg-black/50 px-3 py-2 text-xs text-cyan-400 font-mono">
-                commitchain submit --title &quot;Fix auth bug&quot;
-              </code>
-            </div>
-          </section>
-
-          {/* ─── FEED ─────────────────────────────────────────────── */}
-          <section className="lg:col-span-3">
-            {/* Tab header */}
-            <div className="mb-6 flex items-center gap-4">
-              <button
-                onClick={() => setFeedTab("all")}
-                className={`flex items-center gap-2 text-lg font-bold transition ${
-                  feedTab === "all" ? "text-white" : "text-white/30 hover:text-white/60"
-                }`}
-              >
-                <span className={`inline-block h-3 w-3 rounded-full ${feedTab === "all" ? "bg-purple-400 shadow-lg shadow-purple-400/30" : "bg-white/10"}`} />
-                All Contributions
-                <span className="text-sm font-normal text-white/25">
-                  ({contributions.length})
-                </span>
-              </button>
-
-              {account && (
-                <button
-                  onClick={() => setFeedTab("mine")}
-                  className={`flex items-center gap-2 text-lg font-bold transition ${
-                    feedTab === "mine" ? "text-white" : "text-white/30 hover:text-white/60"
-                  }`}
-                >
-                  <span className={`inline-block h-3 w-3 rounded-full ${feedTab === "mine" ? "bg-cyan-400 shadow-lg shadow-cyan-400/30" : "bg-white/10"}`} />
-                  My Contributions
-                  <span className="text-sm font-normal text-white/25">
-                    ({myContributions.length})
-                  </span>
-                </button>
-              )}
-            </div>
-
-            {visibleContributions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-20 text-white/20">
-                <span className="text-5xl mb-4">{feedTab === "mine" ? "🔍" : "📭"}</span>
-                <p className="font-medium">
-                  {feedTab === "mine"
-                    ? "You haven't submitted any contributions yet"
-                    : "No contributions yet"}
-                </p>
-                <p className="text-sm mt-1">
-                  {feedTab === "mine"
-                    ? "Use the form or CLI to submit your first contribution!"
-                    : "Be the first to ship something!"}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {visibleContributions.map((c) => (
-                  <ContributionCard key={c.id} c={c} />
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* ─── HOW IT WORKS ───────────────────────────────────────── */}
-        <section className="mt-20">
-          <h2 className="mb-8 text-center text-2xl font-bold">How CommitChain Works</h2>
-          <div className="grid gap-4 md:grid-cols-4">
-            {[
-              { icon: "🔧", title: "Code", desc: "Write code & stage changes in git" },
-              { icon: "🧠", title: "Analyze", desc: "AI reviews diff for impact & risk" },
-              { icon: "📌", title: "Pin", desc: "Proof stored permanently on IPFS" },
-              { icon: "⛓️", title: "Record", desc: "Authorship + rep stored on-chain" },
-            ].map(({ icon, title: t, desc }) => (
-              <div
-                key={t}
-                className="rounded-xl border border-white/5 bg-[#111118]/50 p-5 text-center hover:border-cyan-500/20 transition"
-              >
-                <div className="text-3xl mb-3">{icon}</div>
-                <p className="font-bold text-sm mb-1">{t}</p>
-                <p className="text-xs text-white/40">{desc}</p>
-              </div>
-            ))}
+              Launch App
+            </Link>
           </div>
-        </section>
-      </main>
+        </div>
+      </nav>
 
-      {/* ─── FOOTER ───────────────────────────────────────────────── */}
-      <footer className="mt-20 border-t border-white/5 py-8 text-center text-xs text-white/15">
-        CommitChain · Decentralized AI-Powered Open Source Contribution Protocol · Hackathon 2026
+      {/* Hero Section */}
+      <section className="relative pt-40 pb-32 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="absolute inset-0 bg-grid opacity-5" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+
+        <div className="relative max-w-4xl mx-auto">
+          <div className="text-center">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-8 leading-tight tracking-tight">
+              <span className="text-foreground">AI-Powered</span>{" "}
+              <span className="text-primary">Decentralized</span>
+              <br />
+              <span className="text-foreground">Contribution Protocol</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-muted-foreground mb-12 leading-relaxed max-w-2xl mx-auto">
+              Submit code contributions, get AI analysis, pin proof to IPFS, and
+              earn on-chain reputation on Polygon.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/dashboard"
+                className="px-8 py-3.5 rounded-xl bg-primary text-black font-bold text-base hover:opacity-90 hover:shadow-lg hover:shadow-primary/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+              >
+                Get Started <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/docs"
+                className="px-8 py-3.5 rounded-xl border-2 border-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all font-bold text-base"
+              >
+                Read Docs
+              </Link>
+            </div>
+
+            {/* Terminal Demo */}
+            <div className="mt-16 max-w-2xl mx-auto">
+              <div className="rounded-2xl border border-border/30 bg-secondary/20 backdrop-blur-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-border/20 bg-secondary/30">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-mono ml-2">
+                    terminal
+                  </span>
+                </div>
+                <div className="p-6 font-mono text-sm text-muted-foreground space-y-2">
+                  <div className="text-foreground">
+                    $ <span className="text-primary">commitchain</span> submit
+                    --repo ./my-project
+                  </div>
+                  <div>✓ Analyzing 24 files...</div>
+                  <div>
+                    ✓ AI Score:{" "}
+                    <span className="text-primary font-bold">94/100</span>
+                  </div>
+                  <div>
+                    ✓ Pinned to IPFS:{" "}
+                    <span className="text-accent">QmX7...k9F2</span>
+                  </div>
+                  <div>
+                    ✓ Reputation minted on{" "}
+                    <span className="text-primary font-bold">Polygon</span>
+                  </div>
+                  <div className="text-green-500">Done in 1.8s ✓</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-32 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div>
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-bold mb-4">Powerful Features</h2>
+            <p className="text-lg text-muted-foreground">
+              Everything you need to showcase your contributions
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Feature 1 */}
+            <div className="p-8 rounded-2xl border border-border/30 bg-secondary/20 hover:border-primary/40 hover:bg-secondary/30 transition-all group">
+              <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-5 group-hover:bg-primary/25 transition-colors">
+                <Brain className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">AI Analysis</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Powered by Google Gemini, get instant analysis of your code
+                contributions with impact scoring.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="p-8 rounded-2xl border border-border/30 bg-secondary/20 hover:border-primary/40 hover:bg-secondary/30 transition-all group">
+              <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-5 group-hover:bg-primary/25 transition-colors">
+                <Lock className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">IPFS Storage</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Your contribution proofs permanently stored on IPFS via Pinata,
+                ensuring immutable records.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="p-8 rounded-2xl border border-border/30 bg-secondary/20 hover:border-primary/40 hover:bg-secondary/30 transition-all group">
+              <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-5 group-hover:bg-primary/25 transition-colors">
+                <BarChart3 className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">On-Chain Reputation</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Build verifiable reputation on Polygon blockchain. Earn tokens
+                and track transparently.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="p-8 rounded-2xl border border-border/30 bg-secondary/20 hover:border-primary/40 hover:bg-secondary/30 transition-all group">
+              <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-5 group-hover:bg-primary/25 transition-colors">
+                <Shield className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Secure & Verified</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                All contributions cryptographically verified and stored securely
+                on blockchain.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="p-8 rounded-2xl border border-border/30 bg-secondary/20 hover:border-primary/40 hover:bg-secondary/30 transition-all group">
+              <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-5 group-hover:bg-primary/25 transition-colors">
+                <Zap className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Instant Submissions</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Submit with one click. Get AI analysis and on-chain recording in
+                seconds.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="p-8 rounded-2xl border border-border/30 bg-secondary/20 hover:border-primary/40 hover:bg-secondary/30 transition-all group">
+              <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center mb-5 group-hover:bg-primary/25 transition-colors">
+                <Code2 className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Developer Tools</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                CLI tools and SDK for seamless integration into your development
+                workflow.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section
+        id="how"
+        className="py-32 px-4 sm:px-6 lg:px-8 border-t border-border/30 relative z-10"
+      >
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-5xl font-bold mb-8">Ready to Get Started?</h2>
+          <p className="text-xl text-muted-foreground mb-12">
+            Join the decentralized contribution revolution. Submit your first
+            contribution today.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-black font-bold text-lg hover:opacity-90 hover:shadow-lg hover:shadow-primary/30 transition-all shadow-lg shadow-primary/20"
+          >
+            Launch Dashboard <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer
+        id="stats"
+        className="border-t border-border/30 py-16 px-4 sm:px-6 lg:px-8 relative z-10"
+      >
+        <div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <Code2 className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bold text-lg">CommitChain</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                AI-powered decentralized contribution protocol on Polygon
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4 text-foreground">Product</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="#features"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#how"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    How It Works
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    href="/docs"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Documentation
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4 text-foreground">Community</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    GitHub
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Discord
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4 text-foreground">Legal</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Privacy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Terms
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-border/30 pt-8 text-center text-sm text-muted-foreground space-y-2">
+            <p>
+              &copy; 2026 CommitChain. Decentralized contribution protocol. All
+              rights reserved.
+            </p>
+            <RotatingMadeBy />
+          </div>
+        </div>
       </footer>
     </div>
   );

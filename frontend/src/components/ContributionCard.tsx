@@ -1,6 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  AlertOctagon,
+  AlertTriangle,
+  Bug,
+  Lightbulb,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
 import type { OnChainContribution } from "@/hooks/useContract";
 import { ContributionModal } from "./ContributionModal";
 
@@ -117,18 +125,18 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
   return (
     <>
     <div
-      className="group rounded-xl border border-white/5 bg-[#111118] p-5 transition hover:border-cyan-500/20 hover:bg-[#13131f] cursor-pointer"
+      className="group rounded-xl border border-border/30 bg-secondary/20 p-5 transition hover:border-primary/40 hover:bg-secondary/30 cursor-pointer"
       onClick={() => setModalOpen(true)}
     >
       {/* Header row */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 text-xs font-bold">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
             {addr.slice(2, 4).toUpperCase()}
           </div>
           <div>
-            <p className="font-semibold text-white/90">{c.title}</p>
-            <p className="font-mono text-xs text-white/40">{short}</p>
+            <p className="font-semibold text-foreground">{c.title}</p>
+            <p className="font-mono text-xs text-muted-foreground">{short}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -137,7 +145,7 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
               {analysis.impactScore}/10
             </span>
           )}
-          <span className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-400">
+          <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
             #{c.id}
           </span>
         </div>
@@ -145,10 +153,10 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
 
       {/* AI Analysis */}
       {loading ? (
-        <div className="mt-3 h-12 animate-pulse rounded-lg bg-white/5" />
+        <div className="mt-3 h-12 animate-pulse rounded-lg bg-secondary" />
       ) : analysis ? (
         <div className="mt-3 space-y-3">
-          <p className="text-sm text-white/60">{analysis.summary}</p>
+          <p className="text-sm text-muted-foreground">{analysis.summary}</p>
 
           {/* Badges row */}
           <div className="flex flex-wrap gap-2">
@@ -159,23 +167,27 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
               {analysis.contributionType}
             </span>
             {analysis.isSecurityRelevant && (
-              <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-400">
-                🔒 security relevant
+              <span className="inline-flex items-center gap-1 rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-400">
+                <Lock className="w-3 h-3" />
+                <span>security relevant</span>
               </span>
             )}
             {analysis.hasBreakingChange && (
-              <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400">
-                ⚠ breaking change
+              <span className="inline-flex items-center gap-1 rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400">
+                <AlertTriangle className="w-3 h-3" />
+                <span>breaking change</span>
               </span>
             )}
             {analysis.fixesVulnerability && (
-              <span className="rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400">
-                🛡️ fixes vulnerability
+              <span className="inline-flex items-center gap-1 rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400">
+                <ShieldCheck className="w-3 h-3" />
+                <span>fixes vulnerability</span>
               </span>
             )}
             {analysis.introducesVulnerability && (
-              <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 animate-pulse">
-                🚨 introduces vulnerability
+              <span className="inline-flex items-center gap-1 rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 animate-pulse">
+                <AlertOctagon className="w-3 h-3" />
+                <span>introduces vulnerability</span>
               </span>
             )}
           </div>
@@ -183,13 +195,13 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
           {/* Score bars (expanded) */}
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-            className="text-xs text-white/30 hover:text-white/60 transition cursor-pointer"
+            className="text-xs text-muted-foreground hover:text-foreground transition cursor-pointer"
           >
             {expanded ? "▾ Hide scores" : "▸ Show all scores"}
           </button>
 
           {expanded && (
-            <div className="space-y-2 rounded-lg bg-white/[0.02] p-3">
+            <div className="space-y-2 rounded-lg bg-secondary/30 p-3">
               {([
                 ["Impact", analysis.impactScore],
                 ["Quality", analysis.qualityScore],
@@ -201,8 +213,8 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
                 const { pct, color } = scoreBar(score);
                 return (
                   <div key={label} className="flex items-center gap-3">
-                    <span className="w-20 text-xs text-white/40">{label}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <span className="w-20 text-xs text-muted-foreground">{label}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                       <div
                         className={`h-full rounded-full ${color} transition-all duration-500`}
                         style={{ width: `${pct}%` }}
@@ -219,39 +231,46 @@ export function ContributionCard({ c }: { c: OnChainContribution }) {
 
           {/* Issues */}
           {analysis.issues && analysis.issues.length > 0 && (
-            <div className="rounded-lg bg-red-500/5 border border-red-500/10 px-3 py-2 text-xs text-red-400/80">
-              🐛 {analysis.issues[0]}
-              {analysis.issues.length > 1 && (
-                <span className="text-white/20"> +{analysis.issues.length - 1} more</span>
-              )}
+            <div className="flex items-start gap-2 rounded-lg bg-red-500/5 border border-red-500/10 px-3 py-2 text-xs text-red-400/80">
+              <Bug className="w-3 h-3 mt-0.5" />
+              <span>
+                {analysis.issues[0]}
+                {analysis.issues.length > 1 && (
+                  <span className="text-muted-foreground/60">
+                    {" "}
+                    +{analysis.issues.length - 1} more
+                  </span>
+                )}
+              </span>
             </div>
           )}
 
           {/* Suggestions */}
           {analysis.suggestions && analysis.suggestions.length > 0 && (
-            <div className="rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-white/40">
-              💡 {analysis.suggestions[0]}
+            <div className="flex items-start gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-xs text-muted-foreground">
+              <Lightbulb className="w-3 h-3 mt-0.5 text-primary" />
+              <span>{analysis.suggestions[0]}</span>
             </div>
           )}
         </div>
       ) : null}
 
       {/* IPFS link */}
-      <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs font-mono text-white/40">
-        <span className="text-cyan-400">IPFS</span>
+      <div className="mt-3 flex items-center gap-2 rounded-lg bg-secondary/30 px-3 py-2 text-xs font-mono text-muted-foreground">
+        <span className="text-primary">IPFS</span>
         <a
           href={`https://gateway.pinata.cloud/ipfs/${c.ipfsCID}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="truncate underline decoration-white/10 hover:text-white transition"
+          className="truncate underline decoration-border hover:text-foreground transition"
         >
           {c.ipfsCID}
         </a>
       </div>
 
       {/* Timestamp */}
-      <p className="mt-2 text-right text-xs text-white/20">
+      <p className="mt-2 text-right text-xs text-muted-foreground">
         {new Date(c.timestamp * 1000).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",

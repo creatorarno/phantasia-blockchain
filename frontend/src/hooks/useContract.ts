@@ -39,6 +39,8 @@ export interface ContractHookReturn {
   account: string | null;
   connecting: boolean;
   connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  switchNetwork: () => Promise<void>;
   reputation: number;
   contributions: OnChainContribution[];
   submitContribution: (title: string, cid: string) => Promise<void>;
@@ -46,6 +48,8 @@ export interface ContractHookReturn {
   txHash: string | null;
   error: string | null;
   refreshData: () => Promise<void>;
+  chainId: string | null;
+  isCorrectNetwork: boolean;
 }
 
 // ─── Network switch helper ───────────────────────────────────────
@@ -80,6 +84,8 @@ async function ensureAmoyNetwork() {
 //  HOOK
 // ═══════════════════════════════════════════════════════════════
 
+const STORAGE_KEY = "commitchain_wallet_connected";
+
 export function useContract(): ContractHookReturn {
   const [account, setAccount] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
@@ -88,6 +94,10 @@ export function useContract(): ContractHookReturn {
   const [submitting, setSubmitting] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [chainId, setChainId] = useState<string | null>(null);
+
+  const expectedChainId = CHAIN_CONFIG.chainId;
+  const isCorrectNetwork = chainId === expectedChainId;
 
   // ─── Read-only provider (lazy) ────────────────────────────────
   function getReadContract(): Contract | null {
@@ -97,14 +107,24 @@ export function useContract(): ContractHookReturn {
   }
 
   // ─── Fetch on-chain data ──────────────────────────────────────
+  const RPC_TIMEOUT = 8000;
+
   const refreshData = useCallback(async () => {
     const readContract = getReadContract();
     if (!readContract) return;
 
+    const withTimeout = <T,>(p: Promise<T>): Promise<T> =>
+      Promise.race([
+        p,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("RPC timeout")), RPC_TIMEOUT)
+        ),
+      ]);
+
     try {
       // Try getAllContributions first (cheaper single call)
       try {
-        const all = await readContract.getAllContributions();
+        const all = await withTimeout(readContract.getAllContributions());
         const items: OnChainContribution[] = all.map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (c: any, i: number) => ({
@@ -118,12 +138,12 @@ export function useContract(): ContractHookReturn {
         setContributions(items.reverse()); // newest first
       } catch {
         // Fallback: iterate
-        const count = Number(await readContract.getContributionCount());
+        const count = Number(await withTimeout(readContract.getContributionCount()));
         const items: OnChainContribution[] = [];
         const start = Math.max(0, count - 50);
         for (let i = count - 1; i >= start; i--) {
           const [contributor, title, ipfsCID, timestamp] =
-            await readContract.getContribution(i);
+            await withTimeout(readContract.getContribution(i));
           items.push({ id: i, contributor, title, ipfsCID, timestamp: Number(timestamp) });
         }
         setContributions(items);
@@ -131,7 +151,7 @@ export function useContract(): ContractHookReturn {
 
       // Reputation
       if (account) {
-        const rep = Number(await readContract.getReputation(account));
+        const rep = Number(await withTimeout(readContract.getReputation(account)));
         setReputation(rep);
       }
     } catch {
@@ -144,6 +164,83 @@ export function useContract(): ContractHookReturn {
     refreshData();
   }, [refreshData]);
 
+  // ─── Auto-reconnect on mount (persistence) ────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const eth = getEth();
+    if (!eth) return;
+
+    const tryReconnect = async () => {
+      try {
+        const wasConnected = localStorage.getItem(STORAGE_KEY);
+        if (!wasConnected) return;
+
+        const provider = new BrowserProvider(eth as never);
+        const timeout = 5000;
+        const accountsPromise = provider.send("eth_accounts", []);
+        const netPromise = provider.getNetwork();
+
+        const [accounts, net] = await Promise.race([
+          Promise.all([accountsPromise, netPromise]),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Wallet timeout")), timeout)
+          ),
+        ]);
+
+        const hexChainId = "0x" + net.chainId.toString(16);
+        setChainId(hexChainId);
+        if (accounts?.[0]) {
+          setAccount(accounts[0]);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    };
+
+    tryReconnect();
+  }, []);
+
+  // ─── Listen for account/chain changes ──────────────────────────
+  useEffect(() => {
+    try {
+      const eth = getEth() as unknown as {
+        on?: (event: string, cb: (args: unknown) => void) => void;
+        removeListener?: (event: string, cb: (args: unknown) => void) => void;
+      } | null;
+      if (!eth?.on) return;
+
+      const handleAccountsChanged = (accounts: unknown) => {
+        const arr = Array.isArray(accounts) ? accounts : [];
+        if (!arr.length) {
+          setAccount(null);
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          setAccount(arr[0] as string);
+        }
+      };
+
+      const handleChainChanged = () => {
+        window.location.reload(); // recommended by MetaMask
+      };
+
+      eth.on("accountsChanged", handleAccountsChanged);
+      eth.on("chainChanged", handleChainChanged);
+
+      return () => {
+        try {
+          eth.removeListener?.("accountsChanged", handleAccountsChanged);
+          eth.removeListener?.("chainChanged", handleChainChanged);
+        } catch {
+          /* ignore */
+        }
+      };
+    } catch {
+      /* provider API may differ */
+    }
+  }, []);
+
   // ─── Connect Wallet ───────────────────────────────────────────
   const connectWallet = useCallback(async () => {
     setError(null);
@@ -154,10 +251,16 @@ export function useContract(): ContractHookReturn {
     }
     try {
       setConnecting(true);
+      setError(null);
       await ensureAmoyNetwork();
       const provider = new BrowserProvider(eth as never);
       const accounts = await provider.send("eth_requestAccounts", []);
+      const net = await provider.getNetwork();
+      const hexChainId = "0x" + net.chainId.toString(16);
+
+      setChainId(hexChainId);
       setAccount(accounts[0]);
+      localStorage.setItem(STORAGE_KEY, "true");
     } catch (err: unknown) {
       const code = (err as { code?: number }).code;
       if (code === 4001) {
@@ -168,6 +271,27 @@ export function useContract(): ContractHookReturn {
     } finally {
       setConnecting(false);
     }
+  }, []);
+
+  // ─── Switch to correct network ────────────────────────────────
+  const switchNetwork = useCallback(async () => {
+    setError(null);
+    try {
+      await ensureAmoyNetwork();
+      window.location.reload();
+    } catch (err: unknown) {
+      setError((err as Error).message ?? "Failed to switch network");
+    }
+  }, []);
+
+  // ─── Disconnect Wallet ────────────────────────────────────────
+  const disconnectWallet = useCallback(() => {
+    setAccount(null);
+    setReputation(0);
+    setChainId(null);
+    setError(null);
+    setTxHash(null);
+    localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   // ─── Submit Contribution ──────────────────────────────────────
@@ -212,6 +336,8 @@ export function useContract(): ContractHookReturn {
     account,
     connecting,
     connectWallet,
+    disconnectWallet,
+    switchNetwork,
     reputation,
     contributions,
     submitContribution: submitContributionFn,
@@ -219,5 +345,7 @@ export function useContract(): ContractHookReturn {
     txHash,
     error,
     refreshData,
+    chainId,
+    isCorrectNetwork,
   };
 }
