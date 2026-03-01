@@ -164,12 +164,38 @@ export async function analyzeWithGemini(
       json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
     // Strip markdown fences if present
-    const cleaned = text
+    let cleaned = text
       .replace(/```json\s*/gi, "")
       .replace(/```\s*/g, "")
       .trim();
 
-    const parsed: AIAnalysis = JSON.parse(cleaned);
+    // Extract the JSON object if surrounded by extra text
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleaned = jsonMatch[0];
+    }
+
+    // Fix common Gemini JSON quirks:
+    // 1. Trailing commas before } or ]
+    cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
+    // 2. Single-line // comments
+    cleaned = cleaned.replace(/\/\/[^\n]*/g, "");
+    // 3. Multi-line /* */ comments
+    cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
+    // 4. Unquoted property values that are words (but not true/false/null/numbers)
+    //    e.g. contributionType: feature → contributionType: "feature"
+    cleaned = cleaned.replace(
+      /:\s*(?!true|false|null|[\d\-"\[{])([a-zA-Z_]\w*)\s*([,\}])/g,
+      ': "$1"$2'
+    );
+
+    let parsed: AIAnalysis;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.error("Gemini returned unparseable JSON, raw text:", text);
+      throw parseErr;
+    }
 
     // Validate & clamp all numeric scores to 0–10 integers
     const clampScore = (v: unknown, fallback = 5): number =>
