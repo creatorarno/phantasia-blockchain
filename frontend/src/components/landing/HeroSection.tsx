@@ -1,18 +1,12 @@
 import Link from "next/link";
+import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
 
 export function HeroSection() {
   return (
     <section className="relative min-h-[100svh] sm:min-h-[921px] flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
-      {/* Background Visual: Cryptographic Mesh */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(210,187,255,0.1),transparent,transparent)]" />
-        <div
-          className="w-full h-full bg-center bg-cover"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCoChnd0qMxFFgVFk1Q0UGcT58baPB3wZm9-3qqJVgji9lX2c9Z-XGm8lcp4sDQo1kbMSpwcp0Tgc3O9_W03ft8oXiYJXtD08QXtq5FNAT1pCPmJTd4QywmFEe0fPZnVNK8HP9sAp47bbPzlnmcjHL4HBn3JLV6b8hHsk7kBPnbKbC7SzNg1-LRhyfuNeRImfsOhGO6cVyIAt7FA89tPkh298WfZ3u2PNCzQ8BibaaNp_RdhiBQ0W4gwDd5JGuBnfSn5wLlYl2UHIY')",
-          }}
-        />
+      {/* Background Visual: Interactive Ripple */}
+      <div className="absolute inset-0 z-0">
+        <BackgroundRippleEffect />
       </div>
 
       <div className="relative z-10 text-center max-w-5xl w-full">
