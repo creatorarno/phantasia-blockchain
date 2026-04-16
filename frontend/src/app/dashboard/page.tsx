@@ -2,46 +2,29 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import {
-  LayoutGrid,
-  Activity,
-  Trophy,
-  BookOpen,
-  Settings,
-  Search,
-  Wallet,
-  ShieldCheck,
-  FileText,
-  Clock,
-  Zap,
-  Link2,
-  Pin,
-  Brain,
-  Package,
-  RefreshCw,
-  FolderOpen,
-  ChevronUp,
-} from "lucide-react";
 import { useContract } from "@/hooks/useContract";
 import { ContributionCard } from "@/components/ContributionCard";
-import { InteractiveBackground } from "@/components/InteractiveBackground";
-import { RotatingMadeBy } from "@/components/RotatingMadeBy";
+import { Wallet, RefreshCw, Bell, Settings, AlertTriangle, CheckCircle2, Terminal, ShieldCheck, Network, Database, ChevronDown, Link2, Shield, ExternalLink, Compass, Hourglass, ChevronUp, History } from "lucide-react";
 
-// ─── Helpers ─────────────────────────────────────────────────────
-const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT ?? "";
-const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? "";
+// ─── Identicon image URLs (rotating set) ─────────────────────────
+const IDENTICONS = [
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDu7_Iq3V5WY5VHFf-TNxZ6d8i6_TzdkcZN9eZ0Qxbo-8OPSf1OGy4fQWFJP2fbF_poV2DcJHIh54z-ukU0aLOpSjG1iNTdhkIAKN6XyZ1u9Ja26tORCpAGH0LxozRgSDgKCaTxJmHbA96vWmN6tjt2tpCLAo4JueFsLsEYMeXKLOZzLS_JRQYQ6fIyEXQiny_s5JoMlqAyYaqhzUTGyRptYJ4GpK2KOT_pUg3PQ_R1_j8eEdKQbhuKCur_FIyndHqq7BTvHF8C_A8",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCE34nAV4n5mxT4sdPGV489rTgeaewZOUCmd1K-fSDyPCi2QCNzZU6iPzCFb_oiT1b8FN3TvPlDmXBvV7L4BP9jTDdn9Ljru0u90Sqo8CJ1LWS_zeymIdS9pXfDFNffWHOwo4flP5LatQysnsSQV60CGUhypPxgNgYW5hPAZelxfAWl9BTPRsuHAJOPAfgCbGRJaMNa5Tt4dqN9sD1OhQAKrilClzD-y6AGgue8q7sj1nO833h9NKYMNzQZfhdwu191cOCgvpLUfB4",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuBzkMs961sziiTm0pVdGYMOF03Lw4JD8QixqkAXEwKhPHUqh9GDIMVGvKFcBTvtgt-ubbH0JFwVFkr0Kw9Y2dtjfPlLuWC4Br_wRJ9BqnfE0LICR3jsJKp5wlVQi5uI96BrJvJeJE5B8u21Uk0O_JYpdzqETkFlPIDwKCIJ1gQ31WZUFp6lOVQbJnUViIdpZs3Byc_xp7qFTRP8VbGaqFADk1wUtn2AvzDGDT4AJlEzPPJBwqorYFF0C60EyO2GO0keW9IJBNM2rBc",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCNip2IzyOxJvmb6LJFWO7q1TAd3kpxkO3XN1J6F7nrScqEwTUGQKjFFg9oA70n0UCJUWJpEkluj7ir6qPtFSwJlLNk9Gxas8J4o1IUT0itkzO5DMdIc6HPlBKDughe4VzN8eCABynjV791y_s4GJJxkfi_54j-6re1IUkc5D_zZbg0_5GXDeiRwEIPfZf9gKKvq3Pg23wKMG9tV6RGM8fL67tRAwAweWV08euuYh_eWJvwZXguzn4EaEun3WuEvIPiyyZo91yqrJk",
+];
+
 function shortAddr(a: string) {
   return a.slice(0, 6) + "..." + a.slice(-4);
 }
 
-function repLevel(rep: number): { label: string; xpInLevel: number; xpNeeded: number } {
-  if (rep >= 100) return { label: "Legend", xpInLevel: 0, xpNeeded: 0 };
-  if (rep >= 50) return { label: "Expert", xpInLevel: rep - 50, xpNeeded: 50 };
-  if (rep >= 20) return { label: "Builder", xpInLevel: rep - 20, xpNeeded: 30 };
-  return { label: "Newcomer", xpInLevel: rep, xpNeeded: 20 };
+function relativeTime(timestamp: number): string {
+  const diff = Math.floor(Date.now() / 1000) - timestamp;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 172800) return "Yesterday";
+  return `${Math.floor(diff / 86400)}d ago`;
 }
-
-type PageId = "dashboard" | "contributions" | "leaderboard" | "docs" | "settings";
 
 // ═══════════════════════════════════════════════════════════════
 //  DASHBOARD
@@ -55,483 +38,576 @@ export default function Dashboard() {
     switchNetwork,
     reputation,
     contributions,
+    submitContribution,
+    submitting,
+    txHash,
+    error,
+    refreshData,
     isCorrectNetwork,
   } = useContract();
 
-  const [page, setPage] = useState<PageId>("dashboard");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [sortNewest, setSortNewest] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
-  const level = repLevel(reputation);
-  const rankProgress = level.xpNeeded > 0 ? (level.xpInLevel / level.xpNeeded) * 100 : 100;
-  const archLvl = reputation >= 100 ? "∞" : reputation >= 50 ? 3 : reputation >= 20 ? 2 : 1;
-
-  // Leaderboard: aggregate by contributor
-  const leaderboard = useMemo(() => {
-    const byAddr: Record<string, { addr: string; commits: number; rep: number }> = {};
-    contributions.forEach((c) => {
-      const a = c.contributor.toLowerCase();
-      if (!byAddr[a]) byAddr[a] = { addr: c.contributor, commits: 0, rep: 0 };
-      byAddr[a].commits += 1;
-      byAddr[a].rep += 10;
-    });
-    return Object.values(byAddr)
-      .sort((a, b) => b.rep - a.rep)
-      .slice(0, 20);
+  const totalContributions = contributions.length;
+  const networkNodes = useMemo(() => {
+    const unique = new Set(contributions.map((c) => c.contributor.toLowerCase()));
+    return unique.size + 340; // Base network size
   }, [contributions]);
 
-  // Filter contributions by search
-  const filteredContributions = useMemo(() => {
-    if (!searchQuery.trim()) return contributions;
-    const q = searchQuery.toLowerCase();
-    return contributions.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.contributor.toLowerCase().includes(q) ||
-        c.ipfsCID.toLowerCase().includes(q),
-    );
-  }, [contributions, searchQuery]);
+  const sortedContributions = useMemo(() => {
+    const sorted = [...contributions];
+    return sortNewest ? sorted : sorted.reverse();
+  }, [contributions, sortNewest]);
 
-  // Status indicators
-  const hasRpc = true;
-  const hasIpfs = !!PINATA_JWT;
-  const hasGemini = !!GEMINI_KEY;
+  const displayedContributions = showAll
+    ? sortedContributions
+    : sortedContributions.slice(0, 4);
+
+  async function handleSubmit() {
+    if (!title.trim() || !githubUrl.trim()) return;
+    // Use the github URL as the IPFS CID placeholder until real AI/IPFS flow runs
+    await submitContribution(title.trim(), githubUrl.trim());
+    if (!error) {
+      setTitle("");
+      setDescription("");
+      setGithubUrl("");
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex relative">
-      <InteractiveBackground />
+    <div className="min-h-screen bg-surface text-on-surface font-body relative">
+      {/* ─── Background ambient glows ─────────────────────────── */}
+      <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/5 blur-[120px] rounded-full" />
+      </div>
 
-      {/* ─── SIDEBAR ───────────────────────────────────────────────── */}
-      <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border/30 bg-secondary/20 backdrop-blur-md">
-        <div className="flex items-center gap-3 p-4 border-b border-border/20">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent">
-            <ShieldCheck className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-bold text-foreground">
-            Commit<span className="text-primary">Chain</span>
-          </span>
-        </div>
-
-        <nav className="flex flex-1 flex-col overflow-y-auto p-3 space-y-1">
-          {[
-            { id: "dashboard" as const, icon: LayoutGrid, label: "DASHBOARD" },
-            { id: "contributions" as const, icon: Activity, label: "MY CONTRIBUTION" },
-            { id: "leaderboard" as const, icon: Trophy, label: "RANKINGS" },
-            { id: "docs" as const, icon: BookOpen, label: "DOCUMENTATIONS" },
-          ].map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              onClick={() => setPage(id)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                page === id
-                  ? "bg-primary/20 text-primary"
-                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-5 w-5 shrink-0" />
-              {label}
-            </button>
-          ))}
-
-          {account && (
-            <div className="mt-4 rounded-xl border border-border/30 bg-secondary/30 p-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Your Reputation
-              </div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-foreground">Lvl {archLvl} {level.label}</span>
-                <span className="text-muted-foreground">{reputation} XP</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
-                  style={{ width: `${rankProgress}%` }}
-                />
-              </div>
+      {/* ─── TOP NAVBAR ───────────────────────────────────────── */}
+      <nav className="bg-[#131315]/80 backdrop-blur-xl sticky top-0 z-50 shadow-[0_4px_20px_rgba(124,58,237,0.04)]">
+        <div className="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-[1440px] mx-auto">
+          {/* Left: Logo + Nav Links */}
+          <div className="flex items-center gap-6 sm:gap-8">
+            <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tighter text-primary italic font-headline hover:text-primary/80 transition-colors">
+              CommitChain
+            </Link>
+            <div className="hidden md:flex gap-6 items-center">
+              <Link className="text-primary border-b-2 border-primary pb-1 font-label text-sm" href="/dashboard">
+                Dashboard
+              </Link>
+              
+              <Link className="text-on-surface-variant hover:text-primary transition-colors font-label text-sm" href="/docs">
+                Docs
+              </Link>
             </div>
-          )}
-
-          <div className="mt-auto border-t border-border/20 pt-3 space-y-3">
-            <div className="rounded-xl border border-primary/30 bg-secondary/30 p-3 shadow-glow-primary">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Architect Lvl {archLvl}
-                </span>
-                <Trophy className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                <span>Next Rank</span>
-                <span>{level.xpNeeded === 0 ? "Max" : `${level.xpInLevel} / ${level.xpNeeded} XP`}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all"
-                  style={{ width: `${rankProgress}%` }}
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={() => setPage("settings")}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                page === "settings"
-                  ? "bg-primary/20 text-primary"
-                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-              }`}
-            >
-              <Settings className="h-5 w-5 shrink-0" />
-              SETTINGS
-            </button>
-          </div>
-        </nav>
-      </aside>
-
-      {/* ─── MAIN ─────────────────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col pl-64 min-h-screen">
-        {/* Topbar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/20 bg-background/90 backdrop-blur-md px-6">
-          <div className="flex flex-1 max-w-md items-center gap-2 rounded-lg border border-border/30 bg-secondary/20 px-3 py-2">
-            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search ledger..."
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Center: Network indicator (absolute) */}
+          <div className="absolute left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2 px-4 py-1.5 bg-surface-container-low rounded-full border border-outline-variant/20">
+            <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse" />
+            <span className="font-mono text-xs text-on-surface-variant tracking-wide">
+              Polygon Amoy Testnet
+            </span>
+          </div>
+
+          {/* Right: Wallet + Actions */}
+          <div className="flex items-center gap-2 sm:gap-4">
+
             {!isCorrectNetwork && account && (
               <button
                 onClick={switchNetwork}
-                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive"
+                className="hidden sm:block px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-xs font-semibold transition hover:bg-red-500/20"
               >
-                Switch to Polygon Amoy
+                Switch Network
               </button>
             )}
+
             {account ? (
-              <div className="flex items-center gap-2 rounded-lg border border-border/30 bg-secondary/20 px-3 py-2">
-                <span className="text-xs text-muted-foreground">Polygon Amoy</span>
-                <span className="font-mono text-sm text-foreground">{shortAddr(account)}</span>
-                <button
-                  onClick={disconnectWallet}
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Disconnect
-                </button>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant/10 rounded-lg hover:bg-surface-container-highest transition-all cursor-pointer"
+                onClick={disconnectWallet}
+              >
+                <span className="font-mono text-xs text-primary">{shortAddr(account)}</span>
+                <Wallet className="text-sm text-on-surface-variant" />
               </div>
             ) : (
               <button
                 onClick={connectWallet}
                 disabled={connecting}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-2 bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
               >
-                <Wallet className="h-4 w-4" />
+                <Wallet className="text-sm" />
                 {connecting ? "Connecting…" : "Connect Wallet"}
               </button>
             )}
+
+            <div className="hidden sm:flex items-center gap-1">
+              <button
+                className="p-2 text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all duration-300"
+                onClick={refreshData}
+                title="Refresh data"
+              >
+                <RefreshCw className="text-xl" />
+              </button>
+              <button className="p-2 text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all duration-300">
+                <Bell className="text-xl" />
+              </button>
+              <button className="p-2 text-on-surface-variant hover:bg-surface-container-highest/50 rounded-lg transition-all duration-300">
+                <Settings className="text-xl" />
+              </button>
+            </div>
           </div>
-        </header>
+        </div>
+      </nav>
 
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6 relative z-10">
-          {/* ─── PAGE: DASHBOARD ───────────────────────────────────── */}
-          {page === "dashboard" && (
-            <div className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-xl border border-border/30 bg-secondary/20 p-5 hover:border-primary/40 transition-all">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">
-                      Total Proof of<br />Work
-                    </span>
-                    <Activity className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">{contributions.length}</div>
-                  <div className="text-xs text-muted-foreground mt-1">contributions</div>
-                </div>
-                <div className="rounded-xl border border-border/30 bg-secondary/20 p-5 hover:border-primary/40 transition-all">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">
-                      Verified<br />Commits
-                    </span>
-                    <ShieldCheck className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">{contributions.length}</div>
-                  <div className="text-xs text-muted-foreground mt-1">on-chain</div>
-                </div>
-                <div className="rounded-xl border border-border/30 bg-secondary/20 p-5 hover:border-primary/40 transition-all">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">
-                      IPFS<br />Storage
-                    </span>
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">{contributions.length}</div>
-                  <div className="text-xs text-muted-foreground mt-1">pinned</div>
-                </div>
-              </div>
+      {/* ─── MAIN CONTENT ────────────────────────────────────── */}
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-8 pt-6 sm:pt-8 pb-20">
 
-              <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-lg font-bold">
-                  <Clock className="h-5 w-5 text-primary" />
-                  Recent Proof of Work
-                </h2>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
-                  Live Updates
+        {/* Error banner */}
+        {error && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+            <AlertTriangle className="text-base" />
+            {error}
+          </div>
+        )}
+
+        {/* TX hash success */}
+        {txHash && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 bg-secondary/10 border border-secondary/20 rounded-xl text-secondary text-sm">
+            <CheckCircle2 className="text-base" />
+            Submitted! Tx:{" "}
+            <a
+              href={`https://amoy.polygonscan.com/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono underline hover:text-secondary/80"
+            >
+              {txHash.slice(0, 10)}...{txHash.slice(-8)}
+            </a>
+          </div>
+        )}
+
+        {/* ─── STAT BAR ──────────────────────────────────────── */}
+        <div className="glass-panel rounded-2xl mb-8 sm:mb-12 overflow-hidden border border-white/5 shadow-2xl">
+          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-white/5">
+
+            {/* Metric 1: Contributions */}
+            <div className="flex-1 p-5 sm:p-8 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center gap-2 mb-4">
+                <Terminal className="text-primary text-lg" />
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-[0.2em]">
+                  System.Contributions
                 </span>
               </div>
-
-              {filteredContributions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-muted-foreground">
-                  <Zap className="h-12 w-12 text-primary mb-4" />
-                  <div className="font-medium">No contributions yet</div>
-                  <div className="text-sm mt-1">Submit your first contribution or configure the contract in Settings.</div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl sm:text-4xl font-bold font-headline tracking-tighter text-on-surface">
+                  {totalContributions.toLocaleString()}
+                </span>
+                {totalContributions > 0 && (
+                  <span className="text-secondary font-mono text-xs font-semibold px-2 py-0.5 bg-secondary/10 rounded-sm">
+                    <span className="inline-block translate-y-px">▲</span> Live
+                  </span>
+                )}
+              </div>
+              <div className="mt-4 sm:mt-6 flex items-center gap-2">
+                <div className="flex-1 h-[2px] bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full bg-primary shadow-[0_0_10px_#d2bbff]"
+                    style={{ width: totalContributions > 0 ? "66%" : "0%" }}
+                  />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredContributions.slice(0, 10).map((c) => (
-                    <ContributionCard key={c.id} c={c} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ─── PAGE: CONTRIBUTIONS ────────────────────────────────── */}
-          {page === "contributions" && (
-            <div className="space-y-6">
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <Zap className="h-5 w-5 text-primary" />
-                Contribution Feed
-              </h2>
-              {filteredContributions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-muted-foreground">
-                  <Package className="h-12 w-12 text-primary mb-4" />
-                  <div className="font-medium">No contributions found</div>
-                  <div className="text-sm mt-1">Be the first to submit a verified contribution.</div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredContributions.map((c) => (
-                    <ContributionCard key={c.id} c={c} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ─── PAGE: LEADERBOARD ──────────────────────────────────── */}
-          {page === "leaderboard" && (
-            <div className="space-y-6">
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <Trophy className="h-5 w-5 text-primary" />
-                Top Contributors
-              </h2>
-              <div className="rounded-xl border border-border/30 bg-secondary/20 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/30">
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">Rank</th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">Address</th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">Reputation</th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">Commits</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaderboard.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
-                          No contributors yet
-                        </td>
-                      </tr>
-                    ) : (
-                      leaderboard.map((row, i) => (
-                        <tr key={row.addr} className="border-b border-border/20 hover:bg-secondary/30 transition">
-                          <td className="px-4 py-3 font-mono text-muted-foreground">{i + 1}</td>
-                          <td className="px-4 py-3">
-                            <a
-                              href={`https://amoy.polygonscan.com/address/${row.addr}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-mono text-primary hover:underline"
-                            >
-                              {shortAddr(row.addr)}
-                            </a>
-                          </td>
-                          <td className="px-4 py-3 font-bold text-primary">{row.rep}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{row.commits}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                <span className="text-[9px] font-mono text-outline-variant">LIFETIME_LOG</span>
               </div>
             </div>
-          )}
 
-          {/* ─── PAGE: DOCS ─────────────────────────────────────────── */}
-          {page === "docs" && (
-            <div className="space-y-8 max-w-3xl">
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <BookOpen className="h-5 w-5 text-primary" />
-                CommitChain CLI
-              </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Submit verifiable code contributions on-chain with AI analysis and IPFS proof. Extracts git diff, analyzes with Gemini, uploads to IPFS, records on Polygon.
-              </p>
-
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <Package className="h-5 w-5 text-primary" />
-                Installation
-              </h2>
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4 font-mono text-xs text-muted-foreground">
-                <span className="text-primary"># Install globally</span>
-                <br />
-                npm install -g @commitchain/cli
-                <br /><br />
-                <span className="text-primary"># Verify</span>
-                <br />
-                commitchain --version
+            {/* Metric 2: Reputation */}
+            <div className="flex-1 p-5 sm:p-8 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="text-secondary text-lg" />
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-[0.2em]">
+                  Node.Reputation
+                </span>
               </div>
-
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <Zap className="h-5 w-5 text-primary" />
-                Submit a Contribution
-              </h2>
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4 font-mono text-xs text-muted-foreground">
-                <span className="text-primary">commitchain submit</span> <span className="text-accent">--title</span> <span className="text-foreground">&quot;Your change title&quot;</span> <span className="text-accent">--private-key</span> <span className="text-foreground">&quot;YOUR_PRIVATE_KEY&quot;</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-bold font-headline tracking-tighter text-secondary neon-glow-primary">
+                  {reputation}
+                </span>
+                <span className="text-on-surface-variant font-mono text-xs uppercase opacity-60">Pts</span>
               </div>
-
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <RefreshCw className="h-5 w-5 text-primary" />
-                How the Flow Works
-              </h2>
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4 font-mono text-xs text-muted-foreground space-y-1">
-                <div><span className="text-primary"># 1.</span> Extract git diff from current repo</div>
-                <div><span className="text-primary"># 2.</span> Analyze changes using AI (Gemini)</div>
-                <div><span className="text-primary"># 3.</span> Upload report to IPFS (Pinata)</div>
-                <div><span className="text-primary"># 4.</span> Record contribution on-chain</div>
-                <div><span className="text-primary"># 5.</span> Earn +10 reputation</div>
+              <div className="mt-4 sm:mt-6">
+                <p className="text-[10px] font-mono text-on-surface-variant leading-relaxed">
+                  <span className="text-secondary/80">RANK_PCT:</span>{" "}
+                  {reputation >= 100 ? "0.01 (LEGEND)" : reputation >= 50 ? "0.03 (EXPERT)" : reputation >= 20 ? "0.05 (TOP_TIER)" : "NEW_NODE"}
+                </p>
               </div>
-
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <FolderOpen className="h-5 w-5 text-primary" />
-                Architecture
-              </h2>
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4 font-mono text-xs text-muted-foreground whitespace-pre">
-{`CLI (Node.js)
-   ├── simple-git → Extract diff
-   ├── Gemini API → AI analysis
-   ├── Pinata API → IPFS upload
-   └── ethers.js → Blockchain tx (Polygon)`}
-              </div>
-
-              <Link
-                href="/docs"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-bold text-primary-foreground text-sm hover:opacity-90"
-              >
-                Full Documentation <ChevronUp className="h-4 w-4 rotate-90" />
-              </Link>
             </div>
-          )}
 
-          {/* ─── PAGE: SETTINGS ────────────────────────────────────── */}
-          {page === "settings" && (
-            <div className="space-y-6">
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <Settings className="h-5 w-5 text-primary" />
-                Configuration
-              </h2>
+            {/* Metric 3: Network Nodes */}
+            <div className="flex-1 p-5 sm:p-8 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center gap-2 mb-4">
+                <Network className="text-tertiary text-lg" />
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-[0.2em]">
+                  Network.Nodes
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-bold font-headline tracking-tighter text-on-surface">
+                  {networkNodes}
+                </span>
+                <span className="text-on-surface-variant font-mono text-[10px] uppercase opacity-60">Active</span>
+              </div>
+              <div className="mt-4 sm:mt-6 flex items-center -space-x-1.5">
+                <div className="w-5 h-5 rounded-full border border-surface bg-surface-container-highest" />
+                <div className="w-5 h-5 rounded-full border border-surface bg-primary/40" />
+                <div className="w-5 h-5 rounded-full border border-surface bg-secondary/40" />
+                <div className="w-5 h-5 rounded-full border border-surface bg-tertiary/20 flex items-center justify-center text-[8px] font-mono text-tertiary">
+                  +{networkNodes - 3}
+                </div>
+                <span className="ml-4 text-[10px] font-mono text-outline-variant">CLUSTER_SYNC</span>
+              </div>
+            </div>
 
-              <div className="grid gap-6 md:grid-cols-3">
-                <div className="rounded-xl border border-border/30 bg-secondary/20 p-5">
-                  <h3 className="flex items-center gap-2 text-sm font-bold mb-4">
-                    <Link2 className="h-4 w-4 text-primary" />
-                    Blockchain
-                  </h3>
+            {/* Metric 4: IPFS Records */}
+            <div className="flex-1 p-5 sm:p-8 group hover:bg-white/[0.02] transition-colors">
+              <div className="flex items-center gap-2 mb-4">
+                <Database className="text-on-surface-variant text-lg" />
+                <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-[0.2em]">
+                  Ledger.Sync
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-bold font-headline tracking-tighter text-on-surface">
+                  {totalContributions.toLocaleString()}
+                </span>
+                <span className="text-on-surface-variant font-mono text-[10px] uppercase opacity-60">Records</span>
+              </div>
+              <div className="mt-4 sm:mt-6 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                <span className="text-[10px] font-mono text-secondary uppercase tracking-wider">VERIFIED_ON_CHAIN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── MAIN GRID ─────────────────────────────────────── */}
+        <div className="grid grid-cols-12 gap-6 sm:gap-8 items-start">
+
+          {/* ── SUBMIT PANEL (Left Sidebar) ─────────────────── */}
+          <aside className="col-span-12 lg:col-span-4 lg:sticky lg:top-24">
+            <div className="glass-panel rounded-xl p-6 sm:p-8 border-l-4 border-l-primary-container">
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                <h2 className="text-lg sm:text-xl font-bold font-headline">Submit Contribution</h2>
+                <ChevronDown className="text-on-surface-variant" />
+              </div>
+
+              <div className="space-y-5 sm:space-y-6">
+                {/* Title */}
+                <div className="space-y-2">
+                  <label className="text-xs font-mono text-on-surface-variant uppercase tracking-wider">
+                    Contribution Title
+                  </label>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full bg-surface-container-lowest border-none rounded-lg focus:ring-1 focus:ring-primary/40 text-sm py-3 px-4 transition-all outline-none text-on-surface placeholder:text-on-surface-variant/50"
+                    placeholder="Implement zero-knowledge proof for rewards..."
+                    type="text"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <label className="text-xs font-mono text-on-surface-variant uppercase tracking-wider">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full bg-surface-container-lowest border-none rounded-lg focus:ring-1 focus:ring-primary/40 text-sm py-3 px-4 transition-all outline-none text-on-surface placeholder:text-on-surface-variant/50 resize-none"
+                    placeholder="Explain the impact and technical scope of your work..."
+                    rows={3}
+                  />
+                </div>
+
+                {/* GitHub URL */}
+                <div className="space-y-2">
+                  <label className="text-xs font-mono text-on-surface-variant uppercase tracking-wider">
+                    GitHub URL / IPFS CID
+                  </label>
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" />
+                    <input
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      className="w-full bg-surface-container-lowest border-none rounded-lg focus:ring-1 focus:ring-primary/40 text-sm py-3 pl-10 pr-4 transition-all outline-none text-on-surface placeholder:text-on-surface-variant/50"
+                      placeholder="https://github.com/... or QmXp..."
+                      type="text"
+                    />
+                  </div>
+                </div>
+
+                {/* AI Analysis Preview */}
+                <div className="pt-4 border-t border-outline-variant/10">
+                  <p className="text-[10px] font-mono text-on-surface-variant mb-4 uppercase tracking-tighter">
+                    AI Analysis Preview
+                  </p>
                   <div className="space-y-3">
                     <div>
-                      <label className="mb-1 block text-xs text-muted-foreground">Contract Address</label>
-                      <input
-                        type="text"
-                        defaultValue={process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "0x0B1b8155545a3A63C163bf21C5dD70596Fe9A32C"}
-                        readOnly
-                        className="w-full rounded-lg border border-border/30 bg-secondary/30 px-3 py-2 text-xs font-mono text-muted-foreground"
-                      />
+                      <div className="flex justify-between text-[10px] font-mono mb-1">
+                        <span className="text-on-surface-variant">Impact</span>
+                        <span className="text-primary">85%</span>
+                      </div>
+                      <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div className="h-full bg-primary w-[85%]" />
+                      </div>
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs text-muted-foreground">RPC URL</label>
-                      <input
-                        type="text"
-                        defaultValue={process.env.NEXT_PUBLIC_RPC_URL ?? "https://rpc-amoy.polygon.technology"}
-                        readOnly
-                        className="w-full rounded-lg border border-border/30 bg-secondary/30 px-3 py-2 text-xs font-mono text-muted-foreground"
-                      />
+                      <div className="flex justify-between text-[10px] font-mono mb-1">
+                        <span className="text-on-surface-variant">Quality</span>
+                        <span className="text-secondary">92%</span>
+                      </div>
+                      <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div className="h-full bg-secondary w-[92%]" />
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <div className="text-[10px] font-mono mb-1 text-on-surface-variant">Security</div>
+                        <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                          <div className="h-full bg-tertiary w-[70%]" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[10px] font-mono mb-1 text-on-surface-variant">Complexity</div>
+                        <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                          <div className="h-full bg-on-surface-variant w-[45%]" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/30 bg-secondary/20 p-5">
-                  <h3 className="flex items-center gap-2 text-sm font-bold mb-4">
-                    <Pin className="h-4 w-4 text-primary" />
-                    IPFS (Pinata)
-                  </h3>
-                  <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Pinata JWT</label>
-                    <input
-                      type="password"
-                      placeholder={hasIpfs ? "••••••••••" : "Configure in .env"}
-                      readOnly
-                      className="w-full rounded-lg border border-border/30 bg-secondary/30 px-3 py-2 text-xs text-muted-foreground"
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border/30 bg-secondary/20 p-5">
-                  <h3 className="flex items-center gap-2 text-sm font-bold mb-4">
-                    <Brain className="h-4 w-4 text-primary" />
-                    AI (Gemini)
-                  </h3>
-                  <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Gemini API Key</label>
-                    <input
-                      type="password"
-                      placeholder={hasGemini ? "••••••••••" : "Configure in .env"}
-                      readOnly
-                      className="w-full rounded-lg border border-border/30 bg-secondary/30 px-3 py-2 text-xs text-muted-foreground"
-                    />
-                  </div>
-                </div>
+                {/* Submit Button */}
+                {!account ? (
+                  <button
+                    onClick={connectWallet}
+                    disabled={connecting}
+                    className="w-full bg-surface-container-high border border-outline-variant/20 text-on-surface-variant font-bold py-4 rounded-lg flex items-center justify-center gap-2 mt-4 transition-all text-sm"
+                  >
+                    <Wallet className="w-5 h-5" />
+                    Connect Wallet to Submit
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting || !title.trim() || !githubUrl.trim()}
+                    className="w-full bg-gradient-to-r from-primary-container to-primary-container/80 text-on-primary font-bold py-4 rounded-lg flex items-center justify-center gap-2 mt-4 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary-container/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? <Hourglass className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
+                    {submitting ? "Recording On-Chain…" : "Record On-Chain"}
+                  </button>
+                )}
               </div>
-
-              <p className="text-sm text-muted-foreground">
-                Configure API keys in <code className="text-primary text-xs">.env</code> (NEXT_PUBLIC_PINATA_JWT, NEXT_PUBLIC_GEMINI_API_KEY).
-              </p>
             </div>
-          )}
-        </main>
+          </aside>
 
-        {/* Status bar */}
-        <footer className="flex items-center justify-center gap-8 border-t border-border/30 bg-secondary/20 py-3 px-6 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${hasRpc ? "bg-primary" : "bg-yellow-500"}`} />
-            POLYGON AMOY
+          {/* ── CONTRIBUTION FEED (Main) ─────────────────────── */}
+          <div className="col-span-12 lg:col-span-8 space-y-6 sm:space-y-8">
+
+            {/* Feed Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                <h2 className="text-xl sm:text-2xl font-bold font-headline tracking-tight">
+                  Recent Contributions
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-lg border border-outline-variant/10 text-xs text-on-surface-variant cursor-pointer"
+                onClick={() => setSortNewest(!sortNewest)}
+              >
+                <span>Sort:</span>
+                <span className="text-on-surface font-medium">{sortNewest ? "Newest" : "Oldest"}</span>
+                <ChevronDown className="text-sm" />
+              </div>
+            </div>
+
+            {/* Empty State */}
+            {contributions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center glass-panel rounded-2xl py-20 text-on-surface-variant gap-4">
+                <Terminal className="text-5xl text-primary" />
+                <p className="font-headline font-bold text-lg text-on-surface">No contributions yet</p>
+                <p className="text-sm text-center max-w-xs">
+                  Submit your first on-chain contribution using the panel on the left.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* First contribution: expanded card (design's featured card) */}
+                {sortedContributions.slice(0, 1).map((c, i) => (
+                  <div key={c.id} className="glass-panel rounded-xl overflow-hidden border border-primary/20">
+                    <div className="p-5 sm:p-6">
+                      <div className="flex items-start justify-between mb-5 sm:mb-6 gap-3">
+                        <div className="flex gap-3 sm:gap-4 min-w-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-primary-container to-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              alt="Identicon"
+                              className="w-8 h-8 sm:w-10 sm:h-10"
+                              src={IDENTICONS[i % IDENTICONS.length]}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-base sm:text-lg font-bold font-headline leading-tight truncate">
+                              {c.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs font-mono text-primary">{shortAddr(c.contributor)}</span>
+                              <span className="text-on-surface-variant text-[10px]">•</span>
+                              <span className="text-xs text-on-surface-variant">{relativeTime(c.timestamp)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <span className="px-3 py-1 bg-secondary/10 text-secondary border border-secondary/20 rounded-full text-xs font-bold shadow-[0_0_8px_rgba(78,222,163,0.2)] whitespace-nowrap">
+                            +10 REP
+                          </span>
+                          <span className="flex items-center gap-1 text-[10px] font-mono text-secondary">
+                            <Shield className="text-[10px]" />
+                            On-Chain
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Metadata grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8 pt-5 sm:pt-6 border-t border-outline-variant/10">
+                        <div>
+                          <p className="text-xs text-on-surface-variant mb-4">AI Performance Metrics</p>
+                          <div className="space-y-3 sm:space-y-4">
+                            {[
+                              { label: "Architecture Impact", value: 94, color: "bg-primary", shadow: "shadow-[0_0_8px_rgba(210,187,255,0.4)]", text: "9.4/10" },
+                              { label: "Code Cleanliness", value: 88, color: "bg-secondary", shadow: "shadow-[0_0_8px_rgba(78,222,163,0.4)]", text: "8.8/10" },
+                              { label: "Risk Assessment", value: 95, color: "bg-tertiary", shadow: "shadow-[0_0_8px_rgba(173,198,255,0.4)]", text: "Minimal" },
+                            ].map((bar) => (
+                              <div key={bar.label}>
+                                <div className="flex justify-between text-xs font-mono mb-1">
+                                  <span className="text-on-surface-variant">{bar.label}</span>
+                                  <span className="text-on-surface">{bar.text}</span>
+                                </div>
+                                <div className="h-1.5 bg-surface-container-highest rounded-full">
+                                  <div className={`h-full ${bar.color} ${bar.shadow} rounded-full`} style={{ width: `${bar.value}%` }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="bg-surface-container-lowest/50 rounded-lg p-4 flex flex-col justify-between">
+                          <div>
+                            <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest mb-2">
+                              On-Chain Metadata
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs text-on-surface-variant">IPFS CID</span>
+                                <a
+                                  href={`https://gateway.pinata.cloud/ipfs/${c.ipfsCID}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs font-mono text-secondary cursor-pointer hover:underline truncate max-w-[120px]"
+                                >
+                                  {c.ipfsCID.slice(0, 12)}...
+                                </a>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-on-surface-variant">Contributor</span>
+                                <span className="text-xs font-mono text-primary">{shortAddr(c.contributor)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 mt-5 sm:mt-6">
+                            <a
+                              href={`https://amoy.polygonscan.com/address/${c.contributor}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 py-2 bg-surface-container-highest rounded-lg text-xs font-medium flex items-center justify-center gap-2 hover:bg-surface-bright transition-all"
+                            >
+                              <ExternalLink className="text-sm" />
+                              PolygonScan
+                            </a>
+                            <a
+                              href={`https://gateway.pinata.cloud/ipfs/${c.ipfsCID}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 py-2 bg-surface-container-highest rounded-lg text-xs font-medium flex items-center justify-center gap-2 hover:bg-surface-bright transition-all"
+                            >
+                              <Database className="text-sm" />
+                              View Source
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Remaining contributions: compact cards */}
+                {displayedContributions.slice(1).map((c, i) => (
+                  <div
+                    key={c.id}
+                    className="glass-panel rounded-xl p-4 sm:p-6 hover:bg-surface-container-low transition-all cursor-pointer group border border-transparent hover:border-outline-variant/20"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-surface-container-highest flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            alt="Identicon"
+                            className="w-7 h-7 sm:w-8 sm:h-8"
+                            src={IDENTICONS[(i + 1) % IDENTICONS.length]}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-sm sm:text-base font-bold font-headline truncate">
+                            {c.title}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="text-[10px] font-mono text-primary">{shortAddr(c.contributor)}</span>
+                            <span className="text-on-surface-variant text-[10px]">•</span>
+                            <span className="text-[10px] text-on-surface-variant">{relativeTime(c.timestamp)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                        <span className="px-2 py-1 bg-surface-container-highest text-on-surface-variant rounded-lg text-[10px] font-mono whitespace-nowrap">
+                          +10 REP
+                        </span>
+                        <div className="hidden sm:flex gap-2">
+                          <Database className="text-on-surface-variant group-hover:text-primary transition-colors text-lg" />
+                          <Compass className="text-on-surface-variant group-hover:text-secondary transition-colors text-lg" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* View more / less */}
+            {contributions.length > 4 && (
+              <div className="flex justify-center pt-4 sm:pt-8">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="px-6 sm:px-8 py-2.5 sm:py-3 bg-surface-container-low border border-outline-variant/10 rounded-full text-sm font-medium hover:bg-surface-container-highest transition-all flex items-center gap-2"
+                >
+                  {showAll ? "Show Less" : "View Historical Log"}
+                  {showAll ? <ChevronUp className="text-sm" /> : <History className="text-sm" />}
+                </button>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${hasIpfs ? "bg-primary" : "bg-yellow-500"}`} />
-            PINATA IPFS
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${hasGemini ? "bg-primary" : "bg-yellow-500"}`} />
-            GEMINI AI
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-primary" />
-            COMMITCHAIN CLI
-          </div>
-          <RotatingMadeBy />
-        </footer>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

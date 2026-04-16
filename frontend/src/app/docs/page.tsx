@@ -1,195 +1,293 @@
-"use client";
-
 import Link from "next/link";
 import {
-  Code2,
   ArrowLeft,
-  Terminal,
+  ArrowRight,
+  ArrowDown,
   Zap,
-  Shield,
-  Package,
-  GitBranch,
-  Lock,
-  FileCode,
-  Server,
-  Wallet,
   Brain,
-  Pin,
+  CloudUpload,
   Link2,
-  Trophy,
-  Bug,
-  Lightbulb,
-  AlertTriangle,
+  GitBranch,
+  Folder,
+  Terminal,
+  LayoutDashboard,
+  Package,
   CheckCircle2,
+  Code2,
+  Shield,
+  AlertTriangle,
+  Tag,
+  Lightbulb,
+  Lock,
+  Bug,
+  Server,
+  Rocket,
+  Trophy,
+  FileText,
   HelpCircle,
+  ExternalLink,
 } from "lucide-react";
-import { InteractiveBackground } from "@/components/InteractiveBackground";
-import { RotatingMadeBy } from "@/components/RotatingMadeBy";
+import type { LucideIcon } from "lucide-react";
+
+// ═══════════════════════════════════════════════════════════════
+//  DOCS PAGE — Same M3 dark theme as landing + dashboard
+// ═══════════════════════════════════════════════════════════════
+
+const sidebarNav = [
+  { label: "Overview", href: "#overview" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Installation", href: "#installation" },
+  { label: "Requirements", href: "#requirements" },
+  { label: "Basic Usage", href: "#usage" },
+  { label: "CLI Output", href: "#cli-output" },
+  { label: "Commands", href: "#commands" },
+  { label: "AI Analysis", href: "#ai" },
+  { label: "IPFS Storage", href: "#ipfs" },
+  { label: "Blockchain", href: "#blockchain" },
+  { label: "Dashboard", href: "#dashboard" },
+  { label: "Security", href: "#security" },
+  { label: "Errors", href: "#errors" },
+  { label: "Environment", href: "#environment" },
+  { label: "Architecture", href: "#architecture" },
+  { label: "Roadmap", href: "#roadmap" },
+];
 
 export default function DocsPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
-      <InteractiveBackground />
+    <div className="min-h-screen bg-surface text-on-surface font-body relative">
+      {/* Background ambient glows */}
+      <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/5 blur-[120px] rounded-full" />
+      </div>
 
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border/20 bg-background/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Code2 className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-white">CommitChain</span>
-            </Link>
+      {/* ─── TOP NAVBAR ───────────────────────────────────────── */}
+      <nav className="bg-[#131315]/80 backdrop-blur-xl sticky top-0 z-50 shadow-[0_4px_20px_rgba(124,58,237,0.04)]">
+        <div className="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-[1440px] mx-auto">
+          <div className="flex items-center gap-6 sm:gap-8">
             <Link
               href="/"
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xl sm:text-2xl font-bold tracking-tighter text-primary italic font-headline hover:text-primary/80 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
+              CommitChain
             </Link>
+            <div className="hidden md:flex gap-6 items-center">
+              <Link
+                className="text-on-surface-variant hover:text-primary transition-colors font-label text-sm"
+                href="/dashboard"
+              >
+                Dashboard
+              </Link>
+             
+              <Link
+                className="text-primary border-b-2 border-primary pb-1 font-label text-sm"
+                href="/docs"
+              >
+                Docs
+              </Link>
+            </div>
           </div>
+
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
-        {/* Header */}
-        <div className="mb-16 text-center">
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4">
-            <span className="text-gradient-primary">CommitChain CLI</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            <code className="text-primary font-mono">@commitchain/cli</code> — AI-Powered Decentralized Contribution Tool
+      {/* ─── MAIN LAYOUT ─────────────────────────────────────── */}
+      <div className="max-w-[1440px] mx-auto flex relative">
+        {/* Sidebar navigation */}
+        <aside className="hidden lg:block w-64 shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 px-6 border-r border-outline-variant/10">
+          <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-[0.2em] mb-4">
+            Documentation
           </p>
-          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-            Submit verifiable code contributions on-chain with AI analysis and IPFS proof.
-          </p>
-        </div>
+          <nav className="space-y-1">
+            {sidebarNav.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="block text-sm text-on-surface-variant hover:text-primary transition-colors py-1.5 px-3 rounded-lg hover:bg-surface-container-low"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
 
-        {/* Overview */}
-        <section className="mb-16">
-          <div className="rounded-2xl border border-border/30 bg-secondary/20 p-8 hover:border-primary/40 transition-all">
-            <h2 className="text-3xl font-bold mb-4 flex items-center gap-3">
-              <Zap className="w-8 h-8 text-primary" />
-              Overview
-            </h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              <strong className="text-foreground">CommitChain CLI</strong> is a developer tool that allows you to submit code contributions directly from your local Git repository to the CommitChain protocol.
-            </p>
-            <p className="text-muted-foreground leading-relaxed mb-6">
-              It extracts your git diff, analyzes code using AI (Gemini), uploads contribution data to IPFS (Pinata), and records proof + reputation on Polygon blockchain. This creates a <strong className="text-foreground">tamper-proof, AI-verified contribution history</strong> tied to your wallet.
-            </p>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4">
-                <Brain className="w-6 h-6 text-primary mb-2" />
-                <h3 className="font-bold mb-1 text-sm">AI Analysis</h3>
-                <p className="text-xs text-muted-foreground">Gemini evaluates code quality, security, and impact</p>
-              </div>
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4">
-                <Pin className="w-6 h-6 text-primary mb-2" />
-                <h3 className="font-bold mb-1 text-sm">IPFS Storage</h3>
-                <p className="text-xs text-muted-foreground">Immutable proof stored permanently via Pinata</p>
-              </div>
-              <div className="rounded-xl border border-border/30 bg-secondary/30 p-4">
-                <Link2 className="w-6 h-6 text-primary mb-2" />
-                <h3 className="font-bold mb-1 text-sm">On-Chain Record</h3>
-                <p className="text-xs text-muted-foreground">Proof + reputation on Polygon blockchain</p>
-              </div>
+        {/* Main content */}
+        <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-16 py-10 sm:py-16">
+          {/* ─── HEADER ──────────────────────────────────────── */}
+          <div className="mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-surface-container-high border border-outline-variant/20">
+              <span className="w-2 h-2 rounded-full bg-secondary neon-glow animate-pulse" />
+              <span className="text-[10px] sm:text-xs font-mono text-on-surface-variant tracking-widest uppercase">
+                v1.0 • Open Source
+              </span>
             </div>
-          </div>
-        </section>
-
-        {/* How It Works (High-Level Flow) */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <GitBranch className="w-8 h-8 text-primary" />
-            How It Works (High-Level Flow)
-          </h2>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 p-6 font-mono text-sm text-muted-foreground">
-            <pre className="whitespace-pre overflow-x-auto">{`Local Git Repo
-      ↓
-CommitChain CLI (commitchain submit)
-      ↓
-AI Analysis (Gemini)
-      ↓
-IPFS Storage (Pinata CID)
-      ↓
-Blockchain Recording (Polygon Amoy)
-      ↓
-CommitChain Dashboard (Profile + Leaderboard)`}</pre>
-          </div>
-        </section>
-
-        {/* Installation */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Package className="w-8 h-8 text-primary" />
-            Installation
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            Install the CLI globally via npm:
-          </p>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 p-6 space-y-4">
-            <div className="rounded-lg bg-secondary/50 p-4 font-mono text-sm">
-              <span className="text-muted-foreground">$</span> <span className="text-primary">npm install -g @commitchain/cli</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Verify installation:</p>
-            <div className="rounded-lg bg-secondary/50 p-4 font-mono text-sm">
-              <span className="text-muted-foreground">$</span> <span className="text-primary">commitchain --version</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Requirements */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <CheckCircle2 className="w-8 h-8 text-primary" />
-            Requirements
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            Before using CommitChain CLI, ensure you have:
-          </p>
-          <ul className="space-y-2 text-muted-foreground">
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Node.js ≥ 18</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Git installed and initialized in your project</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> A GitHub-connected repository (recommended)</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> MetaMask wallet private key (for signing transactions)</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Internet connection (AI + IPFS + Blockchain)</li>
-          </ul>
-        </section>
-
-        {/* Basic Usage */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Terminal className="w-8 h-8 text-primary" />
-            Basic Usage
-          </h2>
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
-            Submit a Contribution
-          </h3>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 p-6 space-y-4">
-            <div className="rounded-lg bg-secondary/50 p-4 font-mono text-sm">
-              <span className="text-primary">commitchain submit</span> <span className="text-accent">--title</span> <span className="text-foreground">&quot;Your change title&quot;</span> <span className="text-accent">--private-key</span> <span className="text-foreground">&quot;YOUR_PRIVATE_KEY&quot;</span>
-            </div>
-            <p className="text-sm font-semibold text-foreground">Example:</p>
-            <div className="rounded-lg bg-secondary/50 p-4 font-mono text-sm">
-              <span className="text-primary">commitchain submit</span> <span className="text-accent">--title</span> <span className="text-foreground">&quot;Refactored authentication logic&quot;</span> <span className="text-accent">--private-key</span> <span className="text-foreground">&quot;0xabc123...&quot;</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This command will: extract git diff, analyze changes using AI, upload report to IPFS, record contribution on-chain, and update your on-chain reputation.
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-headline tracking-tighter leading-tight mb-4">
+              <span className="bg-gradient-to-b from-on-surface to-on-surface-variant bg-clip-text text-transparent">
+                CommitChain CLI
+              </span>
+            </h1>
+            <p className="text-lg sm:text-xl text-on-surface-variant max-w-2xl leading-relaxed">
+              <code className="text-primary font-mono text-base">@commitchain/cli</code> — AI-Powered
+              Decentralized Contribution Tool. Submit verifiable code contributions on-chain with AI
+              analysis and IPFS proof.
             </p>
           </div>
-        </section>
 
-        {/* CLI Output Explained */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Terminal className="w-8 h-8 text-primary" />
-            CLI Output Explained
-          </h2>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 p-6">
-            <div className="rounded-lg bg-secondary/50 p-4 font-mono text-xs text-muted-foreground whitespace-pre overflow-x-auto">{`╔══════════════════════════════════════════╗
+          {/* ─── OVERVIEW ────────────────────────────────────── */}
+          <section id="overview" className="mb-16 scroll-mt-20">
+            <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-outline-variant/10">
+              <SectionHeading Icon={Zap} title="Overview" />
+              <p className="text-on-surface-variant leading-relaxed mb-4">
+                <strong className="text-on-surface">CommitChain CLI</strong> is a developer tool that
+                allows you to submit code contributions directly from your local Git repository to the
+                CommitChain protocol.
+              </p>
+              <p className="text-on-surface-variant leading-relaxed mb-8">
+                It extracts your git diff, analyzes code using AI (Gemini), uploads contribution data
+                to IPFS (Pinata), and records proof + reputation on Polygon blockchain. This creates a{" "}
+                <strong className="text-on-surface">tamper-proof, AI-verified contribution history</strong>{" "}
+                tied to your wallet.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-4">
+                {[
+                  { Icon: Brain, label: "AI Analysis", desc: "Gemini evaluates code quality, security, and impact", color: "text-primary" },
+                  { Icon: CloudUpload, label: "IPFS Storage", desc: "Immutable proof stored permanently via Pinata", color: "text-secondary" },
+                  { Icon: Link2, label: "On-Chain Record", desc: "Proof + reputation on Polygon blockchain", color: "text-tertiary" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-xl bg-surface-container-low border border-outline-variant/10 p-5"
+                  >
+                    <item.Icon className={`w-6 h-6 ${item.color} mb-3`} />
+                    <h3 className="font-bold text-sm font-headline mb-1">{item.label}</h3>
+                    <p className="text-xs text-on-surface-variant">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ─── HOW IT WORKS ────────────────────────────────── */}
+          <section id="how-it-works" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={GitBranch} title="How It Works" />
+            <div className="glass-panel rounded-xl p-6 sm:p-8 border border-outline-variant/10">
+              <div className="space-y-0">
+                {[
+                  { step: "01", label: "Local Git Repo", desc: "Extract diff from your latest commits", Icon: Folder },
+                  { step: "02", label: "CommitChain CLI", desc: "commitchain submit", Icon: Terminal },
+                  { step: "03", label: "AI Analysis", desc: "Gemini evaluates quality, impact, security", Icon: Brain },
+                  { step: "04", label: "IPFS Storage", desc: "Pinata CID — permanent proof", Icon: CloudUpload },
+                  { step: "05", label: "Blockchain Recording", desc: "Recorded on Polygon Amoy", Icon: Link2 },
+                  { step: "06", label: "Dashboard", desc: "Profile + Leaderboard", Icon: LayoutDashboard },
+                ].map((item, i) => (
+                  <div key={item.step} className="flex items-start gap-4 py-4 border-b border-outline-variant/10 last:border-b-0">
+                    <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-mono font-bold text-on-primary">{item.step}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <item.Icon className="w-4 h-4 text-on-surface-variant" />
+                        <h4 className="font-bold text-on-surface font-headline text-sm">{item.label}</h4>
+                      </div>
+                      <p className="text-xs text-on-surface-variant mt-0.5">{item.desc}</p>
+                    </div>
+                    {i < 5 && (
+                      <ArrowDown className="w-4 h-4 text-outline-variant mt-1" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ─── INSTALLATION ────────────────────────────────── */}
+          <section id="installation" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Package} title="Installation" />
+            <p className="text-on-surface-variant mb-4">Install the CLI globally via npm:</p>
+            <div className="space-y-4">
+              <CodeBlock label="Install globally">
+                <span className="text-on-surface-variant">$</span>{" "}
+                <span className="text-primary">npm install -g @commitchain/cli</span>
+              </CodeBlock>
+              <CodeBlock label="Verify installation">
+                <span className="text-on-surface-variant">$</span>{" "}
+                <span className="text-primary">commitchain --version</span>
+              </CodeBlock>
+            </div>
+          </section>
+
+          {/* ─── REQUIREMENTS ────────────────────────────────── */}
+          <section id="requirements" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={CheckCircle2} title="Requirements" />
+            <p className="text-on-surface-variant mb-4">Before using CommitChain CLI, ensure you have:</p>
+            <div className="space-y-2">
+              {[
+                "Node.js ≥ 18",
+                "Git installed and initialized in your project",
+                "A GitHub-connected repository (recommended)",
+                "MetaMask wallet private key (for signing transactions)",
+                "Internet connection (AI + IPFS + Blockchain)",
+              ].map((req) => (
+                <div key={req} className="flex items-center gap-3 py-2">
+                  <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
+                  <span className="text-sm text-on-surface-variant">{req}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ─── BASIC USAGE ─────────────────────────────────── */}
+          <section id="usage" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Terminal} title="Basic Usage" />
+            <h3 className="text-lg font-bold font-headline mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-secondary" />
+              Submit a Contribution
+            </h3>
+            <div className="glass-panel rounded-xl p-6 sm:p-8 border border-outline-variant/10 space-y-4">
+              <CodeBlock label="Command">
+                <span className="text-primary">commitchain submit</span>{" "}
+                <span className="text-tertiary">--title</span>{" "}
+                <span className="text-on-surface">&quot;Your change title&quot;</span>{" "}
+                <span className="text-tertiary">--private-key</span>{" "}
+                <span className="text-on-surface">&quot;YOUR_PRIVATE_KEY&quot;</span>
+              </CodeBlock>
+              <p className="text-xs font-mono text-on-surface-variant uppercase tracking-wider">Example:</p>
+              <CodeBlock label="Example">
+                <span className="text-primary">commitchain submit</span>{" "}
+                <span className="text-tertiary">--title</span>{" "}
+                <span className="text-on-surface">&quot;Refactored authentication logic&quot;</span>{" "}
+                <span className="text-tertiary">--private-key</span>{" "}
+                <span className="text-on-surface">&quot;0xabc123...&quot;</span>
+              </CodeBlock>
+              <p className="text-sm text-on-surface-variant">
+                This will: extract git diff → analyze with AI → upload to IPFS → record on-chain →
+                update reputation.
+              </p>
+            </div>
+          </section>
+
+          {/* ─── CLI OUTPUT ───────────────────────────────────── */}
+          <section id="cli-output" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Terminal} title="CLI Output Explained" />
+            <div className="glass-panel rounded-xl overflow-hidden border border-outline-variant/10">
+              {/* Terminal header */}
+              <div className="bg-surface-container-high/50 p-3 sm:p-4 border-b border-outline-variant/30 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                <span className="ml-4 font-mono text-[10px] text-on-surface-variant opacity-60">
+                  COMMITCHAIN_CLI // SUBMIT_OUTPUT
+                </span>
+              </div>
+              <div className="p-4 sm:p-6 font-mono text-xs sm:text-sm text-on-surface-variant whitespace-pre overflow-x-auto leading-relaxed">
+{`╔══════════════════════════════════════════╗
 ║      CommitChain — Submit Contribution   ║
 ╚══════════════════════════════════════════╝
 
@@ -199,371 +297,456 @@ CommitChain Dashboard (Profile + Leaderboard)`}</pre>
   Branch: main
 
 ▸ Step 2 — Wallet
-  Wallet: 0x8F1C19679a6cA7C1Aa39299f4832FC441E30CE49
+  Wallet: 0x8F1C...CE49
 
 ▸ Step 3 — AI Analysis + IPFS
   Summary: Code improvement and minor refactor
-  Impact: 5/10
-  Risk: low
+  Impact: `}<span className="text-primary">5/10</span>{`
+  Risk: `}<span className="text-secondary">low</span>{`
   IPFS CID: QmXXXX...
   Gateway: https://gateway.pinata.cloud/ipfs/...
 
 ▸ Step 4 — Recording on-chain
   TX Hash: 0x...
-  Contribution recorded successfully!
-  Reputation +10 earned on-chain`}</div>
-          </div>
-        </section>
-
-        {/* Command Reference */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Terminal className="w-8 h-8 text-primary" />
-            Command Reference
-          </h2>
-
-          <div className="space-y-6">
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-6">
-              <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground text-xs">1</span>
-                commitchain submit
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Submit a new contribution to the protocol.
-              </p>
-              <div className="rounded-lg bg-secondary/50 p-4 font-mono text-sm mb-4">
-                <span className="text-primary">commitchain submit</span> <span className="text-accent">--title</span> <span className="text-foreground">&quot;&lt;title&gt;&quot;</span> <span className="text-accent">--private-key</span> <span className="text-foreground">&quot;&lt;wallet_private_key&gt;&quot;</span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/30">
-                      <th className="text-left py-2 font-semibold">Flag</th>
-                      <th className="text-left py-2 font-semibold">Type</th>
-                      <th className="text-left py-2 font-semibold">Required</th>
-                      <th className="text-left py-2 font-semibold">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-muted-foreground">
-                    <tr className="border-b border-border/20">
-                      <td className="py-2 font-mono text-accent">--title</td>
-                      <td className="py-2">string</td>
-                      <td className="py-2 text-primary">Yes</td>
-                      <td className="py-2">Title/description of the contribution</td>
-                    </tr>
-                    <tr className="border-b border-border/20">
-                      <td className="py-2 font-mono text-accent">--private-key</td>
-                      <td className="py-2">string</td>
-                      <td className="py-2 text-primary">Yes</td>
-                      <td className="py-2">User wallet private key for signing tx</td>
-                    </tr>
-                  </tbody>
-                </table>
+  `}<span className="text-secondary">Contribution recorded successfully!</span>{`
+  `}<span className="text-primary">Reputation +10 earned on-chain</span>
               </div>
             </div>
+          </section>
 
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-6">
-              <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground text-xs">2</span>
-                commitchain --help
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Show all available commands and usage instructions.
-              </p>
-              <div className="rounded-lg bg-secondary/50 p-4 font-mono text-sm">
-                <span className="text-muted-foreground">$</span> <span className="text-primary">commitchain --help</span>
+          {/* ─── COMMAND REFERENCE ────────────────────────────── */}
+          <section id="commands" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Code2} title="Command Reference" />
+            <div className="space-y-6">
+              {/* Command 1 */}
+              <div className="glass-panel rounded-xl p-6 sm:p-8 border border-outline-variant/10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+                    <span className="text-xs font-mono font-bold text-on-primary">01</span>
+                  </div>
+                  <h3 className="text-lg font-bold font-headline">commitchain submit</h3>
+                </div>
+                <p className="text-sm text-on-surface-variant mb-4">Submit a new contribution to the protocol.</p>
+                <CodeBlock label="Syntax">
+                  <span className="text-primary">commitchain submit</span>{" "}
+                  <span className="text-tertiary">--title</span>{" "}
+                  <span className="text-on-surface">&quot;&lt;title&gt;&quot;</span>{" "}
+                  <span className="text-tertiary">--private-key</span>{" "}
+                  <span className="text-on-surface">&quot;&lt;wallet_private_key&gt;&quot;</span>
+                </CodeBlock>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-outline-variant/20">
+                        <th className="text-left py-2 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Flag</th>
+                        <th className="text-left py-2 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Type</th>
+                        <th className="text-left py-2 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Required</th>
+                        <th className="text-left py-2 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-on-surface-variant">
+                      <tr className="border-b border-outline-variant/10">
+                        <td className="py-3 font-mono text-tertiary">--title</td>
+                        <td className="py-3">string</td>
+                        <td className="py-3 text-secondary">Yes</td>
+                        <td className="py-3">Title/description of the contribution</td>
+                      </tr>
+                      <tr className="border-b border-outline-variant/10">
+                        <td className="py-3 font-mono text-tertiary">--private-key</td>
+                        <td className="py-3">string</td>
+                        <td className="py-3 text-secondary">Yes</td>
+                        <td className="py-3">User wallet private key for signing tx</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Command 2 */}
+              <div className="glass-panel rounded-xl p-6 sm:p-8 border border-outline-variant/10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+                    <span className="text-xs font-mono font-bold text-on-primary">02</span>
+                  </div>
+                  <h3 className="text-lg font-bold font-headline">commitchain --help</h3>
+                </div>
+                <p className="text-sm text-on-surface-variant mb-4">Show all available commands and usage instructions.</p>
+                <CodeBlock label="Usage">
+                  <span className="text-on-surface-variant">$</span>{" "}
+                  <span className="text-primary">commitchain --help</span>
+                </CodeBlock>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* AI Analysis System */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Brain className="w-8 h-8 text-primary" />
-            AI Analysis System (Gemini Integration)
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            CommitChain uses AI to automatically evaluate contributions.
-          </p>
-          <div className="grid md:grid-cols-2 gap-3">
-            {[
-              { icon: Brain, label: "Summary of code changes" },
-              { icon: Zap, label: "Impact score (0–10)" },
-              { icon: FileCode, label: "Code quality score" },
-              { icon: Shield, label: "Security analysis" },
-              { icon: GitBranch, label: "Complexity level" },
-              { icon: Shield, label: "Risk assessment" },
-              { icon: FileCode, label: "Contribution type (feature, bugfix, chore, refactor)" },
-              { icon: Lightbulb, label: "Improvement suggestions" },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-2 rounded-lg border border-border/30 bg-secondary/30 px-4 py-2">
-                <Icon className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">{label}</span>
+          {/* ─── AI ANALYSIS ─────────────────────────────────── */}
+          <section id="ai" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Brain} title="AI Analysis System (Gemini)" />
+            <p className="text-on-surface-variant mb-6">CommitChain uses AI to automatically evaluate contributions.</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                { Icon: Brain, label: "Summary of code changes" },
+                { Icon: Zap, label: "Impact score (0–10)" },
+                { Icon: Code2, label: "Code quality score" },
+                { Icon: Shield, label: "Security analysis" },
+                { Icon: GitBranch, label: "Complexity level" },
+                { Icon: AlertTriangle, label: "Risk assessment" },
+                { Icon: Tag, label: "Contribution type (feature, bugfix, chore, refactor)" },
+                { Icon: Lightbulb, label: "Improvement suggestions" },
+              ].map(({ Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-3 rounded-xl bg-surface-container-low border border-outline-variant/10 px-4 py-3"
+                >
+                  <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="text-sm text-on-surface-variant">{label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-on-surface-variant mt-4">
+              This AI report is stored permanently on IPFS and linked on-chain.
+            </p>
+          </section>
+
+          {/* ─── IPFS STORAGE ────────────────────────────────── */}
+          <section id="ipfs" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={CloudUpload} title="IPFS Storage (Proof Layer)" />
+            <p className="text-on-surface-variant mb-4">Each submission uploads a JSON payload to IPFS containing:</p>
+            <div className="glass-panel rounded-xl overflow-hidden border border-outline-variant/10">
+              <div className="bg-surface-container-high/50 p-3 border-b border-outline-variant/30 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                <span className="ml-4 font-mono text-[10px] text-on-surface-variant opacity-60">IPFS_PAYLOAD.json</span>
               </div>
-            ))}
-          </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            This AI report is stored permanently on IPFS and linked on-chain.
-          </p>
-        </section>
-
-        {/* IPFS Storage */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Pin className="w-8 h-8 text-primary" />
-            IPFS Storage (Proof Layer)
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            Each submission uploads a JSON payload to IPFS containing:
-          </p>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 p-6">
-            <div className="rounded-lg bg-secondary/50 p-4 font-mono text-xs text-muted-foreground overflow-x-auto">
-              <pre>{`{
+              <div className="p-4 sm:p-6">
+                <pre className="font-mono text-xs sm:text-sm text-on-surface-variant overflow-x-auto">
+{`{
   "title": "Fix login bug",
   "diff": "...git diff...",
   "aiReport": {
     "summary": "...",
-    "impact": 7,
-    "quality": 8
+    "impact": `}<span className="text-primary">7</span>{`,
+    "quality": `}<span className="text-secondary">8</span>{`
   },
   "timestamp": 123456789
-}`}</pre>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              Returned CID example: <code className="text-primary font-mono">QmRT52SACuDLvMJ5cEXATmfhhiVYQFZiGpY6YDFFS69Hnc</code>
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              This CID acts as permanent proof of contribution.
-            </p>
-          </div>
-        </section>
-
-        {/* Blockchain Integration */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Link2 className="w-8 h-8 text-primary" />
-            Blockchain Integration (Polygon Amoy)
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            After IPFS upload, the CLI:
-          </p>
-          <ul className="space-y-2 text-muted-foreground mb-4">
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Calls <code className="text-primary text-xs">submitContribution(title, cid)</code></li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Records contribution immutably</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Updates on-chain reputation (+10 per contribution)</li>
-          </ul>
-          <p className="text-sm font-semibold text-foreground mb-2">Stored On-Chain:</p>
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• Wallet address</li>
-            <li>• Title</li>
-            <li>• IPFS CID</li>
-            <li>• Timestamp</li>
-            <li>• Reputation score</li>
-          </ul>
-        </section>
-
-        {/* User Profile & Dashboard */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Wallet className="w-8 h-8 text-primary" />
-            User Profile & Dashboard
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            After submitting contributions, users can:
-          </p>
-          <ul className="space-y-2 text-muted-foreground">
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Connect wallet on CommitChain website</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> View personal contribution history</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Check AI scores</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Track reputation level</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> View global leaderboard</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> Explore public decentralized feed</li>
-          </ul>
-          <Link
-            href="/dashboard"
-            className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all"
-          >
-            Launch Dashboard
-          </Link>
-        </section>
-
-        {/* Security Notice */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Lock className="w-8 h-8 text-primary" />
-            Security Notice (IMPORTANT)
-          </h2>
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-yellow-400">
-              <AlertTriangle className="w-5 h-5" />
-              Private Key Usage
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              The <code className="text-accent">--private-key</code> flag is used ONLY to sign blockchain transactions locally. It is never stored by CommitChain servers.
-            </p>
-            <p className="text-sm font-semibold text-foreground mb-2">Best Practices:</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400" /> Use a burner wallet for testing</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400" /> Never expose main wallet private key</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400" /> Do NOT commit private keys to GitHub</li>
-            </ul>
-            <p className="text-sm text-muted-foreground mt-4">
-              Recommended alternative (future version): <code className="text-primary">commitchain submit --metamask</code> (for secure wallet signing)
-            </p>
-          </div>
-        </section>
-
-        {/* Error Handling */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Bug className="w-8 h-8 text-primary" />
-            Error Handling
-          </h2>
-          <p className="text-sm font-semibold text-foreground mb-4">Common Errors & Fixes</p>
-          <div className="space-y-4">
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-5">
-              <p className="font-mono text-sm text-destructive mb-2">&quot;No git diff found&quot;</p>
-              <p className="text-sm text-muted-foreground mb-2">Fix:</p>
-              <div className="rounded-lg bg-secondary/50 p-3 font-mono text-xs">
-                <span className="text-primary">git add</span> .<br />
-                <span className="text-primary">git commit</span> -m <span className="text-foreground">&quot;Your changes&quot;</span>
+}`}
+                </pre>
               </div>
             </div>
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-5">
-              <p className="font-mono text-sm text-destructive mb-2">Invalid private key</p>
-              <p className="text-sm text-muted-foreground">Ensure: starts with <code className="text-primary">0x</code>, correct length (64 hex chars)</p>
+            <div className="mt-4 space-y-2 text-sm text-on-surface-variant">
+              <p>Returned CID example: <code className="text-primary font-mono text-xs">QmRT52SACuDLvMJ5cEXATmfhhiVYQFZiGpY6YDFFS69Hnc</code></p>
+              <p>This CID acts as permanent proof of contribution.</p>
             </div>
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-5">
-              <p className="font-mono text-sm text-destructive mb-2">Network / RPC error</p>
-              <p className="text-sm text-muted-foreground">Check: Internet connection, Polygon Amoy RPC availability</p>
+          </section>
+
+          {/* ─── BLOCKCHAIN ──────────────────────────────────── */}
+          <section id="blockchain" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Link2} title="Blockchain Integration (Polygon Amoy)" />
+            <p className="text-on-surface-variant mb-4">After IPFS upload, the CLI:</p>
+            <div className="space-y-2 mb-6">
+              {[
+                <>Calls <code className="text-primary font-mono text-xs">submitContribution(title, cid)</code></>,
+                "Records contribution immutably",
+                "Updates on-chain reputation (+10 per contribution)",
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 py-2">
+                  <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
+                  <span className="text-sm text-on-surface-variant">{item}</span>
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
-
-        {/* Supported Environment */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <CheckCircle2 className="w-8 h-8 text-primary" />
-            Supported Environment
-          </h2>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/30">
-                  <th className="text-left px-4 py-3 font-semibold">Feature</th>
-                  <th className="text-left px-4 py-3 font-semibold">Support</th>
-                </tr>
-              </thead>
-              <tbody className="text-muted-foreground">
-                <tr className="border-b border-border/20"><td className="px-4 py-3">Git Repositories</td><td className="px-4 py-3 text-primary">Yes</td></tr>
-                <tr className="border-b border-border/20"><td className="px-4 py-3">GitHub Projects</td><td className="px-4 py-3 text-primary">Recommended</td></tr>
-                <tr className="border-b border-border/20"><td className="px-4 py-3">Local Repos</td><td className="px-4 py-3 text-primary">Supported</td></tr>
-                <tr className="border-b border-border/20"><td className="px-4 py-3">Monorepos</td><td className="px-4 py-3 text-yellow-400">Partial</td></tr>
-                <tr className="border-b border-border/20"><td className="px-4 py-3">Private Repos</td><td className="px-4 py-3 text-primary">Yes</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Architecture Summary */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Server className="w-8 h-8 text-primary" />
-            Architecture Summary (For Developers)
-          </h2>
-          <div className="rounded-xl border border-border/30 bg-secondary/20 p-6 font-mono text-sm text-muted-foreground">
-            <pre className="whitespace-pre">{`CLI (Node.js)
-   ├── simple-git → Extract diff
-   ├── Gemini API → AI analysis
-   ├── Pinata API → IPFS upload
-   └── ethers.js → Blockchain tx (Polygon)`}</pre>
-          </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            <strong className="text-foreground">Frontend Role:</strong> Wallet connect, Profile view, Leaderboard, Public contribution feed
-          </p>
-        </section>
-
-        {/* Roadmap */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Zap className="w-8 h-8 text-primary" />
-            Roadmap (Upcoming CLI Features)
-          </h2>
-          <ul className="space-y-2 text-muted-foreground">
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> <code className="text-primary text-sm">commitchain history</code> → View past contributions</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> <code className="text-primary text-sm">commitchain reputation</code> → Check on-chain reputation</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> GitHub auto-linking (repo metadata)</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> MetaMask secure signing (no private key flag)</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> AI merge conflict auto-resolution</li>
-            <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> CI/CD integration (GitHub Actions)</li>
-          </ul>
-        </section>
-
-        {/* Why CommitChain CLI */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Trophy className="w-8 h-8 text-primary" />
-            Why CommitChain CLI?
-          </h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {[
-              { icon: Link2, text: "On-chain verifiable contributions" },
-              { icon: Brain, text: "AI-powered code analysis" },
-              { icon: Pin, text: "Permanent IPFS proof storage" },
-              { icon: Trophy, text: "Decentralized reputation system" },
-              { icon: Terminal, text: "Developer-first CLI workflow" },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3 rounded-xl border border-border/30 bg-secondary/20 p-4">
-                <Icon className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-sm font-medium">{text}</span>
+            <div className="glass-panel rounded-xl p-6 border border-outline-variant/10">
+              <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest mb-4">Stored On-Chain</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {["Wallet Address", "Title", "IPFS CID", "Timestamp", "Reputation"].map((field) => (
+                  <div key={field} className="rounded-lg bg-surface-container-lowest px-3 py-2 text-center">
+                    <span className="text-xs font-mono text-primary">{field}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* License & Support */}
-        <section className="mb-16">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-6">
-              <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-                <FileCode className="w-5 h-5 text-primary" />
-                License
-              </h3>
-              <p className="text-sm text-muted-foreground">MIT License © CommitChain</p>
             </div>
-            <div className="rounded-xl border border-border/30 bg-secondary/20 p-6">
-              <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-primary" />
-                Support
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                For issues, feature requests, or bugs: GitHub Issues, Website (commitchain.xyz)
+          </section>
+
+          {/* ─── DASHBOARD ───────────────────────────────────── */}
+          <section id="dashboard" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={LayoutDashboard} title="User Profile & Dashboard" />
+            <p className="text-on-surface-variant mb-4">After submitting contributions, users can:</p>
+            <div className="space-y-2 mb-6">
+              {[
+                "Connect wallet on CommitChain website",
+                "View personal contribution history",
+                "Check AI scores",
+                "Track reputation level",
+                "View global leaderboard",
+                "Explore public decentralized feed",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-3 py-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <span className="text-sm text-on-surface-variant">{item}</span>
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-primary-container to-primary-container/80 text-on-primary px-6 py-3 rounded-lg font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary-container/20"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Launch Dashboard
+            </Link>
+          </section>
+
+          {/* ─── SECURITY ────────────────────────────────────── */}
+          <section id="security" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Lock} title="Security Notice" />
+            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6 sm:p-8">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                <h3 className="text-lg font-bold font-headline text-yellow-400">Private Key Usage</h3>
+              </div>
+              <p className="text-sm text-on-surface-variant mb-4">
+                The <code className="text-tertiary font-mono">--private-key</code> flag is used{" "}
+                <strong className="text-on-surface">ONLY</strong> to sign blockchain transactions locally.
+                It is never stored by CommitChain servers.
+              </p>
+              <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest mb-3">Best Practices</p>
+              <div className="space-y-2 mb-4">
+                {[
+                  "Use a burner wallet for testing",
+                  "Never expose main wallet private key",
+                  "Do NOT commit private keys to GitHub",
+                ].map((tip) => (
+                  <div key={tip} className="flex items-center gap-3 py-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+                    <span className="text-sm text-on-surface-variant">{tip}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-on-surface-variant">
+                Recommended (future): <code className="text-primary font-mono text-xs">commitchain submit --metamask</code> for secure wallet signing
               </p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* CTA */}
-        <section className="text-center py-16 border-t border-border/30">
-          <h2 className="text-4xl font-bold mb-4">Ready to Start Building?</h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Submit your first contribution and start earning on-chain reputation.
+          {/* ─── ERRORS ──────────────────────────────────────── */}
+          <section id="errors" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Bug} title="Error Handling" />
+            <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest mb-4">Common Errors & Fixes</p>
+            <div className="space-y-4">
+              {[
+                {
+                  error: '"No git diff found"',
+                  fix: (
+                    <CodeBlock label="Fix">
+                      <span className="text-primary">git add</span> .{"\n"}
+                      <span className="text-primary">git commit</span>{" "}
+                      <span className="text-on-surface">-m &quot;Your changes&quot;</span>
+                    </CodeBlock>
+                  ),
+                },
+                {
+                  error: "Invalid private key",
+                  fix: (
+                    <p className="text-sm text-on-surface-variant">
+                      Ensure: starts with <code className="text-primary font-mono">0x</code>, correct length (64 hex chars)
+                    </p>
+                  ),
+                },
+                {
+                  error: "Network / RPC error",
+                  fix: (
+                    <p className="text-sm text-on-surface-variant">
+                      Check: Internet connection, Polygon Amoy RPC availability
+                    </p>
+                  ),
+                },
+              ].map(({ error, fix }) => (
+                <div key={error} className="glass-panel rounded-xl p-5 sm:p-6 border border-outline-variant/10">
+                  <p className="font-mono text-sm text-red-400 mb-3">{error}</p>
+                  {fix}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ─── ENVIRONMENT ─────────────────────────────────── */}
+          <section id="environment" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={CheckCircle2} title="Supported Environment" />
+            <div className="glass-panel rounded-xl overflow-hidden border border-outline-variant/10">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-outline-variant/20">
+                    <th className="text-left px-4 sm:px-6 py-3 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Feature</th>
+                    <th className="text-left px-4 sm:px-6 py-3 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Support</th>
+                  </tr>
+                </thead>
+                <tbody className="text-on-surface-variant">
+                  {[
+                    { feature: "Git Repositories", support: "Yes", color: "text-secondary" },
+                    { feature: "GitHub Projects", support: "Recommended", color: "text-secondary" },
+                    { feature: "Local Repos", support: "Supported", color: "text-secondary" },
+                    { feature: "Monorepos", support: "Partial", color: "text-yellow-400" },
+                    { feature: "Private Repos", support: "Yes", color: "text-secondary" },
+                  ].map(({ feature, support, color }) => (
+                    <tr key={feature} className="border-b border-outline-variant/10">
+                      <td className="px-4 sm:px-6 py-3">{feature}</td>
+                      <td className={`px-4 sm:px-6 py-3 font-mono ${color}`}>{support}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* ─── ARCHITECTURE ────────────────────────────────── */}
+          <section id="architecture" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Server} title="Architecture Summary" />
+            <div className="glass-panel rounded-xl overflow-hidden border border-outline-variant/10">
+              <div className="bg-surface-container-high/50 p-3 border-b border-outline-variant/30 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                <span className="ml-4 font-mono text-[10px] text-on-surface-variant opacity-60">SYSTEM_ARCH</span>
+              </div>
+              <div className="p-4 sm:p-6">
+                <pre className="font-mono text-xs sm:text-sm text-on-surface-variant whitespace-pre">
+{`CLI (Node.js)
+   ├── simple-git → `}<span className="text-primary">Extract diff</span>{`
+   ├── Gemini API → `}<span className="text-primary">AI analysis</span>{`
+   ├── Pinata API → `}<span className="text-secondary">IPFS upload</span>{`
+   └── ethers.js  → `}<span className="text-tertiary">Blockchain tx (Polygon)</span>
+                </pre>
+              </div>
+            </div>
+            <p className="text-sm text-on-surface-variant mt-4">
+              <strong className="text-on-surface">Frontend Role:</strong> Wallet connect, Profile view,
+              Leaderboard, Public contribution feed
+            </p>
+          </section>
+
+          {/* ─── ROADMAP ─────────────────────────────────────── */}
+          <section id="roadmap" className="mb-16 scroll-mt-20">
+            <SectionHeading Icon={Rocket} title="Roadmap" />
+            <div className="space-y-3">
+              {[
+                { cmd: "commitchain history", desc: "View past contributions" },
+                { cmd: "commitchain reputation", desc: "Check on-chain reputation" },
+                { cmd: null, desc: "GitHub auto-linking (repo metadata)" },
+                { cmd: null, desc: "MetaMask secure signing (no private key flag)" },
+                { cmd: null, desc: "AI merge conflict auto-resolution" },
+                { cmd: null, desc: "CI/CD integration (GitHub Actions)" },
+              ].map(({ cmd, desc }) => (
+                <div key={desc} className="flex items-center gap-3 py-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <span className="text-sm text-on-surface-variant">
+                    {cmd && <code className="text-primary font-mono text-xs mr-2">{cmd}</code>}
+                    {cmd ? "→ " : ""}
+                    {desc}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ─── WHY + LICENSE ────────────────────────────────── */}
+          <section className="mb-16">
+            <SectionHeading Icon={Trophy} title="Why CommitChain CLI?" />
+            <div className="grid sm:grid-cols-2 gap-3 mb-12">
+              {[
+                { Icon: Link2, text: "On-chain verifiable contributions" },
+                { Icon: Brain, text: "AI-powered code analysis" },
+                { Icon: CloudUpload, text: "Permanent IPFS proof storage" },
+                { Icon: Trophy, text: "Decentralized reputation system" },
+                { Icon: Terminal, text: "Developer-first CLI workflow" },
+              ].map(({ Icon, text }) => (
+                <div key={text} className="flex items-center gap-3 rounded-xl bg-surface-container-low border border-outline-variant/10 p-4">
+                  <Icon className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium text-on-surface">{text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="glass-panel rounded-xl p-6 border border-outline-variant/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold font-headline">License</h3>
+                </div>
+                <p className="text-sm text-on-surface-variant">MIT License © CommitChain</p>
+              </div>
+              <div className="glass-panel rounded-xl p-6 border border-outline-variant/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <HelpCircle className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-bold font-headline">Support</h3>
+                </div>
+                <p className="text-sm text-on-surface-variant">
+                  For issues, feature requests, or bugs: GitHub Issues, Website (commitchain.xyz)
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ─── BOTTOM CTA ──────────────────────────────────── */}
+          <section className="glass-panel rounded-2xl p-8 sm:p-12 text-center border border-outline-variant/10 relative overflow-hidden">
+            <div
+              className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 50% 50%, #7c3aed 0%, transparent 70%)",
+              }}
+            />
+            <h2 className="text-3xl sm:text-4xl font-bold font-headline tracking-tight mb-4 relative z-10">
+              Ready to Start Building?
+            </h2>
+            <p className="text-lg text-on-surface-variant mb-8 max-w-xl mx-auto relative z-10">
+              Submit your first contribution and start earning on-chain reputation.
+            </p>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 bg-white text-background px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform relative z-10"
+            >
+              Launch Dashboard
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </section>
+        </main>
+      </div>
+
+      {/* ─── FOOTER ──────────────────────────────────────────── */}
+      <footer className="w-full py-8 sm:py-12 px-4 sm:px-8 bg-surface border-t border-outline-variant/10 mt-16">
+        <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-on-surface-variant">
+            CommitChain · AI-Powered Decentralized Contribution Protocol · 2026
           </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-bold text-lg hover:opacity-90 hover:shadow-lg hover:shadow-primary/30 transition-all"
-          >
-            Launch Dashboard
-          </Link>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/30 py-8 text-center text-sm text-muted-foreground relative z-10 space-y-2">
-        <p>CommitChain · AI-Powered Decentralized Contribution Protocol · 2026</p>
-        <RotatingMadeBy />
+          <div className="flex items-center gap-6">
+            <Link href="/" className="text-sm text-on-surface-variant hover:text-primary transition-colors">Home</Link>
+            <Link href="/dashboard" className="text-sm text-on-surface-variant hover:text-primary transition-colors">Dashboard</Link>
+            <Link href="/docs" className="text-sm text-on-surface-variant hover:text-primary transition-colors">Docs</Link>
+          </div>
+        </div>
       </footer>
+    </div>
+  );
+}
+
+// ─── Reusable sub-components ──────────────────────────────────────
+
+function SectionHeading({ Icon, title }: { Icon: LucideIcon; title: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <Icon className="w-6 h-6 text-primary" />
+      <h2 className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">{title}</h2>
+    </div>
+  );
+}
+
+function CodeBlock({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl bg-surface-container-lowest border border-outline-variant/10 overflow-hidden">
+      <div className="px-4 py-1.5 bg-surface-container-high/30 border-b border-outline-variant/10">
+        <span className="text-[9px] font-mono text-on-surface-variant uppercase tracking-widest">{label}</span>
+      </div>
+      <div className="p-4 font-mono text-sm text-on-surface-variant whitespace-pre-wrap">{children}</div>
     </div>
   );
 }
