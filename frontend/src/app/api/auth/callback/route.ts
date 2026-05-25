@@ -58,6 +58,29 @@ export async function GET(request: NextRequest) {
 
     const userData = await userRes.json();
 
+    // Fetch user's recent repositories (contributions)
+    const reposRes = await fetch(`https://api.github.com/users/${userData.login}/repos?sort=updated&per_page=5`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    let repos = [];
+    if (reposRes.ok) {
+      const reposData = await reposRes.json();
+      repos = reposData.map((repo: any) => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        html_url: repo.html_url,
+        description: repo.description,
+        stargazers_count: repo.stargazers_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+      }));
+    }
+
     const user = {
       login: userData.login,
       avatar_url: userData.avatar_url,
@@ -65,6 +88,7 @@ export async function GET(request: NextRequest) {
       html_url: userData.html_url,
       public_repos: userData.public_repos,
       followers: userData.followers,
+      contributions: repos, // Using repos as a proxy for contributions for now
     };
 
     // Return an HTML page that posts the user data back to the opener window
@@ -77,7 +101,7 @@ export async function GET(request: NextRequest) {
       if (window.opener) {
         window.opener.postMessage(
           { type: "github-auth-success", user: ${JSON.stringify(user)} },
-          window.location.origin
+          window.opener.location.origin
         );
         window.close();
       } else {

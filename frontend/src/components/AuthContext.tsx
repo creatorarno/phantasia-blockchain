@@ -17,6 +17,16 @@ export interface GitHubUser {
   html_url: string;
   public_repos: number;
   followers: number;
+  contributions?: {
+    id: number;
+    name: string;
+    full_name: string;
+    html_url: string;
+    description: string;
+    stargazers_count: number;
+    language: string;
+    updated_at: string;
+  }[];
 }
 
 interface AuthContextType {
@@ -71,17 +81,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginWithGitHub = useCallback(() => {
+    console.log("Initiating GitHub login...");
     // Open GitHub OAuth in a popup window
     const width = 500;
     const height = 700;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
-    window.open(
+    const popup = window.open(
       "/api/auth/github",
       "github-auth",
       `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
     );
+
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      console.warn("Popup blocked or failed to open. Redirecting instead...");
+      // Fallback: direct redirect if popup is blocked
+      window.location.href = "/api/auth/github";
+    }
   }, []);
 
   const logout = useCallback(() => {

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // GitHub OAuth — Step 1: Redirect user to GitHub authorization page
-export async function GET() {
+export async function GET(request: NextRequest) {
   const clientId = process.env.GITHUB_CLIENT_ID;
 
   if (!clientId) {
@@ -11,12 +11,13 @@ export async function GET() {
     );
   }
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/auth/callback`;
+  const origin = request.nextUrl.origin;
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL ?? origin}/api/auth/callback`;
 
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: "read:user",
+    scope: "read:user repo",
     state: crypto.randomUUID(),
   });
 

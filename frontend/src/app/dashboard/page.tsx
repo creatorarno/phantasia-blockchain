@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/AuthContext";
 import { useContract } from "@/hooks/useContract";
 import { ContributionCard } from "@/components/ContributionCard";
-import { Wallet, RefreshCw, Bell, Settings, AlertTriangle, CheckCircle2, Terminal, ShieldCheck, Network, Database, ChevronDown, Link2, Shield, ExternalLink, Compass, Hourglass, ChevronUp, History } from "lucide-react";
+import { Wallet, RefreshCw, Bell, Settings, AlertTriangle, CheckCircle2, Terminal, ShieldCheck, Network, Database, ChevronDown, Link2, Shield, ExternalLink, Compass, Hourglass, ChevronUp, History, Github, Star, Code2 } from "lucide-react";
 
 // ─── Identicon image URLs (rotating set) ─────────────────────────
 const IDENTICONS = [
@@ -45,6 +46,8 @@ export default function Dashboard() {
     refreshData,
     isCorrectNetwork,
   } = useContract();
+
+  const { user: githubUser, loginWithGitHub } = useAuth();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -410,6 +413,106 @@ export default function Dashboard() {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* ── GITHUB CONTRIBUTIONS PANEL ─────────────────── */}
+            <div className="glass-panel rounded-xl p-6 sm:p-8 mt-6 border-l-4 border-l-secondary/40">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Github className="text-on-surface text-lg" />
+                  <h2 className="text-lg font-bold font-headline">GitHub Activity</h2>
+                </div>
+                {githubUser && (
+                  <span className="text-[10px] font-mono text-secondary px-2 py-0.5 bg-secondary/10 rounded-sm">
+                    CONNECTED
+                  </span>
+                )}
+              </div>
+
+              {!githubUser ? (
+                <div className="text-center py-6">
+                  <p className="text-xs text-on-surface-variant mb-4">
+                    Connect your GitHub account to see your recent contributions here.
+                  </p>
+                  <button
+                    onClick={loginWithGitHub}
+                    className="w-full flex items-center justify-center gap-2 bg-white text-[#131315] font-bold py-2.5 rounded-lg hover:bg-zinc-100 transition-all text-sm"
+                  >
+                    <Github className="w-4 h-4" />
+                    Connect GitHub
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-surface-container-lowest/50 rounded-lg mb-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={githubUser.avatar_url}
+                      alt={githubUser.login}
+                      className="w-10 h-10 rounded-full border border-outline-variant/20"
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-on-surface">{githubUser.name || githubUser.login}</p>
+                      <p className="text-[10px] font-mono text-on-surface-variant">@{githubUser.login}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] font-mono text-on-surface-variant uppercase tracking-widest mb-2">
+                    Recent Repositories
+                  </p>
+                  
+                  {githubUser.contributions && githubUser.contributions.length > 0 ? (
+                    githubUser.contributions.map((repo) => (
+                      <a
+                        key={repo.id}
+                        href={repo.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block p-3 rounded-lg bg-surface-container-lowest/30 hover:bg-surface-container-lowest/60 transition-all group border border-transparent hover:border-outline-variant/10"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-bold text-primary group-hover:underline truncate pr-2">
+                            {repo.name}
+                          </p>
+                          <div className="flex items-center gap-1 text-[10px] text-on-surface-variant">
+                            <Star className="w-3 h-3" />
+                            {repo.stargazers_count}
+                          </div>
+                        </div>
+                        {repo.description && (
+                          <p className="text-[10px] text-on-surface-variant line-clamp-1 mb-2">
+                            {repo.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3">
+                          {repo.language && (
+                            <div className="flex items-center gap-1">
+                              <Code2 className="w-3 h-3 text-secondary" />
+                              <span className="text-[10px] text-on-surface-variant">{repo.language}</span>
+                            </div>
+                          )}
+                          <span className="text-[10px] text-outline-variant">
+                            Updated {new Date(repo.updated_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </a>
+                    ))
+                  ) : (
+                    <p className="text-xs text-on-surface-variant text-center py-4 italic">
+                      No public repositories found.
+                    </p>
+                  )}
+                  
+                  <a
+                    href={githubUser.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center text-[10px] font-mono text-secondary hover:underline mt-2"
+                  >
+                    VIEW FULL PROFILE →
+                  </a>
+                </div>
+              )}
             </div>
           </aside>
 
