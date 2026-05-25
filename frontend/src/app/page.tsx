@@ -4,6 +4,7 @@ import { ValueProposition } from "@/components/landing/ValueProposition";
 import { AIFeatureShowcase } from "@/components/landing/AIFeatureShowcase";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/landing/Footer";
+import { GitHubLoginModal } from "@/components/GitHubLoginModal";
 
 export default function LandingPage() {
   return (
@@ -16,6 +17,7 @@ export default function LandingPage() {
         <CTASection />
       </main>
       <Footer />
+      <GitHubLoginModal />
     </div>
   );
 }

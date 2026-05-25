@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/components/AuthContext";
 import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
 
 export function HeroSection() {
+  const { isAuthenticated, openLoginModal } = useAuth();
+
   return (
     <section className="relative min-h-[100svh] sm:min-h-[921px] flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
       {/* Background Visual: Interactive Ripple */}
@@ -31,12 +36,21 @@ export function HeroSection() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <Link
-            href="/dashboard"
-            className="w-full sm:w-auto text-center bg-gradient-to-r from-primary to-primary-container text-on-primary px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:opacity-90 transition-all active:scale-95"
-          >
-            Get Started
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard"
+              className="w-full sm:w-auto text-center bg-gradient-to-r from-primary to-primary-container text-on-primary px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:opacity-90 transition-all active:scale-95"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <button
+              onClick={openLoginModal}
+              className="w-full sm:w-auto text-center bg-gradient-to-r from-primary to-primary-container text-on-primary px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:opacity-90 transition-all active:scale-95"
+            >
+              Get Started
+            </button>
+          )}
           <Link
             href="/docs"
             className="w-full sm:w-auto text-center px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg border border-outline-variant/30 hover:bg-surface-container-low transition-all active:scale-95"

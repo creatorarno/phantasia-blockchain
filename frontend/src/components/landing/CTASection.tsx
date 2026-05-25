@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/components/AuthContext";
 
 export function CTASection() {
+  const { isAuthenticated, openLoginModal } = useAuth();
+
   return (
     <section id="community" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto glass-card rounded-2xl sm:rounded-3xl p-8 sm:p-12 md:p-16 lg:p-24 text-center relative overflow-hidden border border-outline-variant/10">
@@ -21,12 +26,21 @@ export function CTASection() {
           into on-chain sovereign reputation.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 lg:gap-6 relative z-10">
-          <Link
-            href="/dashboard"
-            className="w-full sm:w-auto text-center bg-white text-background px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg lg:text-xl hover:scale-105 transition-transform"
-          >
-            Get Started Now
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard"
+              className="w-full sm:w-auto text-center bg-white text-background px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg lg:text-xl hover:scale-105 transition-transform"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <button
+              onClick={openLoginModal}
+              className="w-full sm:w-auto text-center bg-white text-background px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg lg:text-xl hover:scale-105 transition-transform"
+            >
+              Get Started Now
+            </button>
+          )}
           <a
             href="https://discord.gg/commitchain"
             target="_blank"
