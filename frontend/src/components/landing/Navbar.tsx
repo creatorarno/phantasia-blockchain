@@ -9,6 +9,7 @@ const navLinks = [
   { label: "How it Works", href: "#how-it-works", active: true },
   { label: "Features", href: "#features", active: false },
   { label: "Community", href: "#community", active: false },
+  { label: "Docs", href: "/docs", active: false },
 ];
 
 export function Navbar() {
@@ -20,7 +21,10 @@ export function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-[#131315]/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(124,58,237,0.04)]">
       <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-full mx-auto relative">
         {/* Logo */}
-        <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tighter text-primary font-headline hover:text-primary/80 transition-colors">
+        <Link
+          href="/"
+          className="text-xl sm:text-2xl font-bold tracking-tighter text-primary font-headline hover:text-primary/80 transition-colors"
+        >
           CommitChain
         </Link>
 
@@ -58,7 +62,9 @@ export function Navbar() {
                 <span className="text-sm font-medium text-on-surface max-w-[120px] truncate">
                   {user.login}
                 </span>
-                <ChevronDown className={`w-4 h-4 text-on-surface-variant transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-on-surface-variant transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {/* Dropdown */}
@@ -70,8 +76,12 @@ export function Navbar() {
                   />
                   <div className="absolute right-0 top-full mt-2 w-52 bg-[#1b1b1d]/95 backdrop-blur-xl border border-outline-variant/20 rounded-xl shadow-2xl z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-outline-variant/10">
-                      <p className="text-sm font-medium text-on-surface truncate">{user.name || user.login}</p>
-                      <p className="text-xs text-on-surface-variant truncate">@{user.login}</p>
+                      <p className="text-sm font-medium text-on-surface truncate">
+                        {user.name || user.login}
+                      </p>
+                      <p className="text-xs text-on-surface-variant truncate">
+                        @{user.login}
+                      </p>
                     </div>
                     <div className="py-1">
                       <Link
@@ -122,9 +132,17 @@ export function Navbar() {
             className="w-6 h-6"
           >
             {mobileOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+              />
             )}
           </svg>
         </button>
@@ -161,8 +179,12 @@ export function Navbar() {
                   className="w-8 h-8 rounded-full border border-outline-variant/20"
                 />
                 <div>
-                  <p className="text-sm font-medium text-on-surface">{user.name || user.login}</p>
-                  <p className="text-xs text-on-surface-variant">@{user.login}</p>
+                  <p className="text-sm font-medium text-on-surface">
+                    {user.name || user.login}
+                  </p>
+                  <p className="text-xs text-on-surface-variant">
+                    @{user.login}
+                  </p>
                 </div>
               </div>
               <Link
