@@ -19,7 +19,7 @@ export function Footer() {
               CommitChain
             </Link>
             <p className="text-zinc-500 font-body text-xs sm:text-sm tracking-wide text-center md:text-left">
-              © 2024 CommitChain. Built for the Cryptographic Atelier.
+              © 2026 CommitChain. Built for the Cryptographic Atelier.
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 sm:gap-x-8 sm:gap-y-3">

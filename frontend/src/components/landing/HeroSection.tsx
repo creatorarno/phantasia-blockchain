@@ -25,7 +25,8 @@ export function HeroSection() {
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold tracking-tighter leading-[1.1] sm:leading-none mb-4 sm:mb-6 text-on-surface">
-          The <span className="text-primary-container">Sovereign Proof</span> <br /> of Contribution
+          The <span className="text-primary">Sovereign Proof</span> <br /> of
+          Contribution
         </h1>
 
         {/* Subheadline */}
@@ -59,7 +60,6 @@ export function HeroSection() {
           </Link>
         </div>
       </div>
-
     </section>
   );
 }
