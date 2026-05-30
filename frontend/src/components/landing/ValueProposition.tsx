@@ -25,13 +25,13 @@ const cards: CardType[] = [
   {
     icon: Brain,
     iconColor: "text-white",
-    iconBg: "bg-primary-container",
+    iconBg: "bg-surface-container-highest",
     title: "AI-Driven Insights",
     description:
       "Automated analysis of impact, security, and complexity for every contribution. Our LLM-vetted proofs ensure meritocracy.",
     tag: "Engine: Neural-Trace v4",
     variant: "featured" as const,
-    badge: "Active Engine",
+
   },
   {
     icon: Database,

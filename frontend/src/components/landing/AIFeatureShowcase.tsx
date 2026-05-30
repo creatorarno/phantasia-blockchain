@@ -17,14 +17,14 @@ const progressBars = [
     value: 88,
     color: "bg-primary",
     textColor: "text-primary",
-    glow: "shadow-[0_0_8px_rgba(210,187,255,0.5)]",
+    glow: "",
   },
   {
     label: "Refactoring Cleanliness",
     value: 92,
     color: "bg-secondary",
     textColor: "text-secondary",
-    glow: "shadow-[0_0_8px_rgba(78,222,163,0.5)]",
+    glow: "",
   },
 ];
 
@@ -76,7 +76,6 @@ export function AIFeatureShowcase() {
 
           {/* Right: Dashboard Mockup */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-primary/20 blur-[60px] sm:blur-[100px] rounded-full opacity-50" />
             <div className="relative bg-surface-container-lowest border border-outline-variant/30 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl">
               {/* Dashboard Header */}
               <div className="bg-surface-container-high/50 px-3 sm:px-4 py-2.5 sm:py-4 border-b border-outline-variant/30 flex justify-between items-center">

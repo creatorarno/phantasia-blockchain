@@ -17,15 +17,15 @@ export function HeroSection() {
       <div className="relative z-10 text-center max-w-5xl w-full">
         {/* Status Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 sm:mb-8 rounded-full bg-surface-container-high border border-outline-variant/20">
-          <span className="w-2 h-2 rounded-full bg-secondary neon-glow animate-pulse flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-secondary animate-pulse flex-shrink-0" />
           <span className="text-[10px] sm:text-xs font-mono text-on-surface-variant tracking-widest uppercase">
             Protocol Live on Polygon Mainnet
           </span>
         </div>
 
         {/* Headline */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold tracking-tighter leading-[1.1] sm:leading-none mb-4 sm:mb-6 bg-gradient-to-b from-on-surface to-on-surface-variant bg-clip-text text-transparent">
-          The Sovereign Proof <br /> of Contribution
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold tracking-tighter leading-[1.1] sm:leading-none mb-4 sm:mb-6 text-on-surface">
+          The <span className="text-primary-container">Sovereign Proof</span> <br /> of Contribution
         </h1>
 
         {/* Subheadline */}
@@ -60,9 +60,6 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Subtle Light Bleed Effects */}
-      <div className="absolute -bottom-24 -left-24 w-48 sm:w-96 h-48 sm:h-96 bg-primary/10 blur-[80px] sm:blur-[120px] rounded-full" />
-      <div className="absolute top-24 -right-24 w-48 sm:w-96 h-48 sm:h-96 bg-secondary/5 blur-[80px] sm:blur-[120px] rounded-full" />
     </section>
   );
 }

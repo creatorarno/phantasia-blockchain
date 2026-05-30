@@ -10,7 +10,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-on-surface overflow-hidden relative">
       <Navbar />
-      <main className="pt-24">
+      <main>
         <HeroSection />
         <AIFeatureShowcase />
         <ValueProposition />

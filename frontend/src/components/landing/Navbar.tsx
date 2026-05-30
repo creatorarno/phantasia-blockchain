@@ -16,6 +16,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("");
+  const [scrolled, setScrolled] = useState(false);
   const { user, isAuthenticated, openLoginModal, logout } = useAuth();
 
   useEffect(() => {
@@ -27,8 +28,9 @@ export function Navbar() {
         }
       };
 
-      // Set initial hash
+      // Set initial hash and scroll
       handleHashChange();
+      setScrolled(window.scrollY > 20);
 
       window.addEventListener("hashchange", handleHashChange);
 
@@ -55,6 +57,7 @@ export function Navbar() {
 
       // Handle scrolled to top edge case
       const handleScroll = () => {
+        setScrolled(window.scrollY > 20);
         if (window.scrollY < 80) {
           setActiveLink("");
         }
@@ -70,8 +73,14 @@ export function Navbar() {
     }
   }, []);
 
+  const isScrolledOrOpen = scrolled || mobileOpen;
+
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#131315]/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(124,58,237,0.04)]">
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      isScrolledOrOpen
+        ? "bg-[#131315]/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(124,58,237,0.04)]"
+        : "bg-transparent"
+    }`}>
       <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-full mx-auto relative">
         <div className="flex items-center gap-8 lg:gap-12">
           {/* Logo */}
@@ -207,7 +216,7 @@ export function Navbar() {
         </button>
 
         {/* Bottom border gradient */}
-        <div className="bg-gradient-to-r from-transparent via-surface-container-highest/30 to-transparent h-[1px] w-full absolute bottom-0 left-0" />
+        <div className={`bg-gradient-to-r from-transparent via-surface-container-highest/30 to-transparent h-[1px] w-full absolute bottom-0 left-0 transition-opacity duration-300 ${isScrolledOrOpen ? "opacity-100" : "opacity-0"}`} />
       </div>
 
       {/* Mobile Menu */}
