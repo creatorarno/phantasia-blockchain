@@ -12,8 +12,8 @@ export default function LandingPage() {
       <Navbar />
       <main className="pt-24">
         <HeroSection />
-        <ValueProposition />
         <AIFeatureShowcase />
+        <ValueProposition />
         <CTASection />
       </main>
       <Footer />

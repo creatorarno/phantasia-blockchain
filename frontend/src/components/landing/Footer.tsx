@@ -6,7 +6,7 @@ const footerLinks = [
   { label: "Terms", href: "#", external: false },
   { label: "Privacy", href: "#", external: false },
   { label: "Twitter", href: "https://twitter.com/commitchain", external: true },
-  { label: "Discord", href: "https://discord.gg/commitchain", external: true },
+  { label: "Github", href: "https://github.com/creatorarno/phantasia-blockchain", external: true },
 ];
 
 export function Footer() {

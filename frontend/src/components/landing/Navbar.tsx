@@ -1,48 +1,107 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
 import { LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 
 const navLinks = [
-  { label: "How it Works", href: "#how-it-works", active: true },
-  { label: "Features", href: "#features", active: false },
-  { label: "Community", href: "#community", active: false },
-  { label: "Docs", href: "/docs", active: false },
+  { label: "How it Works", href: "#how-it-works" },
+  { label: "Features", href: "#features" },
+  { label: "Community", href: "#community" },
+  { label: "Docs", href: "/docs" },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeLink, setActiveLink] = useState("");
   const { user, isAuthenticated, openLoginModal, logout } = useAuth();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const handleHashChange = () => {
+        const hash = window.location.hash;
+        if (hash && navLinks.some(link => link.href === hash)) {
+          setActiveLink(hash);
+        }
+      };
+
+      // Set initial hash
+      handleHashChange();
+
+      window.addEventListener("hashchange", handleHashChange);
+
+      // Scroll Spy Logic
+      const ids = ["how-it-works", "features", "community"];
+      const elements = ids.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+
+      const observerOptions = {
+        root: null,
+        rootMargin: "-30% 0px -50% 0px",
+        threshold: 0.1,
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            setActiveLink(`#${id}`);
+          }
+        });
+      }, observerOptions);
+
+      elements.forEach((el) => observer.observe(el));
+
+      // Handle scrolled to top edge case
+      const handleScroll = () => {
+        if (window.scrollY < 80) {
+          setActiveLink("");
+        }
+      };
+      window.addEventListener("scroll", handleScroll);
+
+      return () => {
+        window.removeEventListener("hashchange", handleHashChange);
+        window.removeEventListener("scroll", handleScroll);
+        elements.forEach((el) => observer.unobserve(el));
+        observer.disconnect();
+      };
+    }
+  }, []);
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#131315]/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(124,58,237,0.04)]">
       <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-full mx-auto relative">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="text-xl sm:text-2xl font-bold tracking-tighter text-primary font-headline hover:text-primary/80 transition-colors"
-        >
-          CommitChain
-        </Link>
+        <div className="flex items-center gap-8 lg:gap-12">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="text-xl sm:text-2xl font-bold tracking-tighter text-primary font-headline hover:text-primary/80 transition-colors"
+          >
+            CommitChain
+          </Link>
 
-        {/* Desktop Nav Links */}
-        <div className="hidden md:flex items-center gap-6 lg:gap-10">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className={
-                link.active
-                  ? "text-primary border-b-2 border-primary-container pb-1 font-headline tracking-tight text-sm lg:text-base"
-                  : "text-zinc-400 font-medium hover:text-zinc-100 transition-colors font-headline tracking-tight transition-all active:scale-95 duration-200 text-sm lg:text-base"
-              }
-            >
-              {link.label}
-            </a>
-          ))}
+          {/* Desktop Nav Links */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-10">
+            {navLinks.map((link) => {
+              const isActive = activeLink === link.href;
+              return (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setActiveLink(link.href)}
+                  className={
+                    isActive
+                      ? "text-primary border-b-2 border-primary-container pb-1 font-headline tracking-tight text-sm lg:text-base"
+                      : "text-zinc-400 font-medium hover:text-zinc-100 transition-colors font-headline tracking-tight transition-all active:scale-95 duration-200 text-sm lg:text-base"
+                  }
+                >
+                  {link.label}
+                </a>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right side: Auth button */}
@@ -154,20 +213,26 @@ export function Navbar() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden bg-surface-container-lowest/95 backdrop-blur-xl border-t border-outline-variant/20 px-4 sm:px-6 py-4 space-y-3">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className={
-                link.active
-                  ? "block text-primary font-headline tracking-tight py-1"
-                  : "block text-zinc-400 font-medium hover:text-zinc-100 transition-colors font-headline tracking-tight py-1"
-              }
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = activeLink === link.href;
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={() => {
+                  setActiveLink(link.href);
+                  setMobileOpen(false);
+                }}
+                className={
+                  isActive
+                    ? "block text-primary font-headline tracking-tight py-1"
+                    : "block text-zinc-400 font-medium hover:text-zinc-100 transition-colors font-headline tracking-tight py-1"
+                }
+              >
+                {link.label}
+              </a>
+            );
+          })}
 
           {isAuthenticated && user ? (
             <div className="space-y-2 pt-2 border-t border-outline-variant/20">

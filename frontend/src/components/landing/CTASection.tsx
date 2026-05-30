@@ -42,12 +42,12 @@ export function CTASection() {
             </button>
           )}
           <a
-            href="https://discord.gg/commitchain"
+            href="https://github.com/creatorarno/phantasia-blockchain"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto text-center text-on-surface px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg lg:text-xl border border-outline-variant/30 hover:bg-white/5 transition-all"
           >
-            Join Discord
+            Contribute to Github
           </a>
         </div>
       </div>
